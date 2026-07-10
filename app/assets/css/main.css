@@ -1,0 +1,40 @@
+@import '@fontsource-variable/fraunces';
+@import '@fontsource-variable/inter';
+@import 'tailwindcss';
+
+/*
+ * Semantic palette — mockup 1a (blush & sage), from Claude Design.
+ * To swap to 1b (terracotta & olive), replace each value with its
+ * trailing "1b:" comment value. Nothing else changes.
+ */
+@theme {
+  --font-display: 'Fraunces Variable', Georgia, serif;
+  --font-body: 'Inter Variable', system-ui, sans-serif;
+
+  --color-cream: #fbf7f3; /* page background        | 1b: #F9F4EA */
+  --color-ink: #4a3b40; /* primary text           | 1b: #3B3127 */
+  --color-petal: #bc747e; /* primary rose accent    | 1b: #A9522C */
+  --color-petal-mid: #d6939a; /* mid petal              | 1b: #C97048 */
+  --color-petal-soft: #e7b3b8; /* light petal            | 1b: #DE9268 */
+  --color-petal-deep: #96545e; /* flower centre / eyebrow| 1b: #7E3A1C */
+  --color-leaf: #85997c; /* foliage                | 1b: #77804A */
+  --color-leaf-soft: #a9b9a1; /* light foliage          | 1b: #9A9D68 */
+  --color-leaf-deep: #647a5c; /* stems / dark foliage   | 1b: #565F32 */
+  --color-sage: #5a6b52; /* dark section bg        | 1b: #565F32 */
+  --color-gold: #c9a15c; /* stamen                 | 1b: #B08A3E */
+  --color-gold-soft: #e4c489; /* stamen dots            | 1b: #D9B36A */
+  --color-blush: #f4e9e4; /* soft section bg        | 1b: #F1E7D4 */
+}
+
+body {
+  background-color: var(--color-cream);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+}
