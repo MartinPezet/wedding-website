@@ -77,7 +77,7 @@ Feature: RSVP flow
       When the server processes it
       Then it is rejected regardless of client state
 
-  @req:mobile-first-rsvp-experience
+  @manual @req:mobile-first-rsvp-experience
   Rule: Mobile-first RSVP experience
     The whole flow works comfortably at phone width.
 

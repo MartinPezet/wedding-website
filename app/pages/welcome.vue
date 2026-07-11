@@ -3,6 +3,8 @@ const { loggedIn, fetch: refreshSession } = useUserSession()
 const password = ref('')
 const error = ref('')
 const pending = ref(false)
+// set when an invite QR/link didn't match — keep copy friendly and generic
+const inviteFallback = computed(() => 'invite' in useRoute().query)
 
 if (loggedIn.value) {
   await navigateTo('/')
@@ -39,7 +41,10 @@ useSeoMeta({
   <section class="pt-24 text-center sm:pt-36">
     <p class="text-sm uppercase tracking-widest text-petal-deep">Welcome</p>
     <h1 class="mt-4 text-5xl text-ink sm:text-6xl">Ciera &amp; Martin</h1>
-    <p class="mt-6 text-leaf-deep">Enter the password from your invitation.</p>
+    <p v-if="inviteFallback" class="mt-6 text-leaf-deep">
+      Hmm, that link didn't quite work — no worries! Just enter the password from your invitation below.
+    </p>
+    <p v-else class="mt-6 text-leaf-deep">Enter the password from your invitation.</p>
 
     <form class="mx-auto mt-8 flex max-w-xs flex-col gap-3" @submit.prevent="submit">
       <input

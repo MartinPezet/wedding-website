@@ -24,6 +24,9 @@ export default defineNuxtConfig({
   runtimeConfig: {
     // set via NUXT_SITE_PASSWORD
     sitePassword: '',
+    // set via NUXT_DB_URL / NUXT_DB_AUTH_TOKEN; defaults to local file
+    dbUrl: '',
+    dbAuthToken: '',
   },
   compatibilityDate: '2026-07-10',
   nitro: {

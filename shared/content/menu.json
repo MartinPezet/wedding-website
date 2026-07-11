@@ -1,0 +1,11 @@
+{
+  "options": [
+    { "id": "beef", "name": "Roast Beef", "description": "Slow-roasted beef with seasonal vegetables and red wine jus (placeholder)" },
+    { "id": "fish", "name": "Pan-Seared Salmon", "description": "Salmon fillet with crushed new potatoes and lemon butter (placeholder)" },
+    { "id": "veggie", "name": "Wild Mushroom Wellington", "description": "Vegetarian wellington with root vegetables and herb gravy (placeholder)" }
+  ],
+  "childMenu": [
+    { "id": "child-chicken", "name": "Chicken Goujons", "description": "With chips and peas (placeholder)" },
+    { "id": "child-pasta", "name": "Tomato Pasta", "description": "With hidden-vegetable sauce (placeholder)" }
+  ]
+}

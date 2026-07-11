@@ -1,5 +1,6 @@
 import faqJson from './faq.json'
 import giftsJson from './gifts.json'
+import menuJson from './menu.json'
 import scheduleJson from './schedule.json'
 import travelJson from './hotels.json'
 
@@ -43,7 +44,19 @@ export interface Gifts {
   linkText: string
 }
 
+export interface MenuOption {
+  id: string
+  name: string
+  description?: string
+}
+
+export interface Menu {
+  options: MenuOption[]
+  childMenu?: MenuOption[]
+}
+
 export const schedule: ScheduleEvent[] = scheduleJson
 export const travel: TravelInfo = travelJson
 export const faq: FaqEntry[] = faqJson
 export const gifts: Gifts = giftsJson
+export const menu: Menu = menuJson

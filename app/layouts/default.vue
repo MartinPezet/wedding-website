@@ -78,6 +78,12 @@ watch(
             >Schedule</NuxtLink
           >
           <NuxtLink
+            to="/rsvp"
+            class="hover:text-petal"
+            exact-active-class="text-petal-deep hover:text-petal-deep"
+            >RSVP</NuxtLink
+          >
+          <NuxtLink
             to="/gifts"
             class="hover:text-petal"
             exact-active-class="text-petal-deep hover:text-petal-deep"
