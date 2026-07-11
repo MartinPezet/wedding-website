@@ -1,0 +1,38 @@
+{
+  "hotels": [
+    {
+      "name": "The Willow Inn",
+      "description": "Cosy village inn a short stroll from the venue. Mention the wedding for a group rate.",
+      "distance": "5 min walk from the venue",
+      "url": "https://example.com/willow-inn"
+    },
+    {
+      "name": "Placeholder Manor Hotel",
+      "description": "Larger country hotel with a spa, ideal if you're making a weekend of it.",
+      "distance": "10 min drive from the venue",
+      "url": "https://example.com/placeholder-manor"
+    },
+    {
+      "name": "Budget Stays Placeholder",
+      "description": "Reliable budget option near the motorway junction.",
+      "distance": "15 min drive from the venue",
+      "url": "https://example.com/budget-stays"
+    }
+  ],
+  "transport": [
+    {
+      "name": "By train",
+      "description": "Placeholder Station is the nearest stop, 10 minutes from the venue by taxi. Trains run hourly from the city.",
+      "url": "https://www.nationalrail.co.uk"
+    },
+    {
+      "name": "By taxi",
+      "description": "Local firms know the venue well — book your return journey in advance, especially after midnight."
+    },
+    {
+      "name": "By car",
+      "description": "The venue is 5 minutes from junction 12. Follow signs for Placeholder Village, then Willow Lane."
+    }
+  ],
+  "parking": "Free parking is available in the field beside the venue. Cars may be left overnight but must be collected by 10am the next morning."
+}

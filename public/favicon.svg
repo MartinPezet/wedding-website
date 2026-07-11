@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-42 -42 84 84">
+  <!-- a-bloom from the design system; generated from main.css @theme by scripts/generate-favicons.mjs -->
+  <defs>
+    <path id="pt" d="M0,3 C-13,-4 -15,-27 0,-38 C15,-27 13,-4 0,3 Z"/>
+    <g id="ring">
+      <use href="#pt"/>
+      <use href="#pt" transform="rotate(45)"/>
+      <use href="#pt" transform="rotate(90)"/>
+      <use href="#pt" transform="rotate(135)"/>
+      <use href="#pt" transform="rotate(180)"/>
+      <use href="#pt" transform="rotate(225)"/>
+      <use href="#pt" transform="rotate(270)"/>
+      <use href="#pt" transform="rotate(315)"/>
+    </g>
+  </defs>
+  <use href="#ring" fill="#e7b3b8"/>
+  <use href="#ring" transform="rotate(22.5) scale(0.64)" fill="#d6939a"/>
+  <use href="#ring" transform="scale(0.34)" fill="#bc747e"/>
+  <circle r="5" fill="#96545e"/>
+</svg>

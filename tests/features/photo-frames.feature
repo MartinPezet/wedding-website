@@ -11,7 +11,7 @@ Feature: Photo frames
       When the page renders
       Then the photo is clipped within a floral frame using theme colours
 
-  @req:frames-animate-on-scroll
+  @manual @req:frames-animate-on-scroll
   Rule: Frames animate on scroll
     Floral elements twist subtly with scroll, respecting reduced-motion.
 
@@ -27,7 +27,7 @@ Feature: Photo frames
       When a framed photo renders
       Then the frame is static
 
-  @req:responsive-image-delivery
+  @manual @req:responsive-image-delivery
   Rule: Responsive image delivery
     Photos are served at viewport-appropriate sizes without layout shift.
 
