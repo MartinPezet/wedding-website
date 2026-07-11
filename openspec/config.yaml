@@ -1,20 +1,12 @@
-schema: spec-driven
+schema: spec-driven-bdd
 
-# Project context (optional)
-# This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
-
-# Per-artifact rules (optional)
-# Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always include a "Non-goals" section
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
+context: |
+  Wedding website. Tech stack: Nuxt 4, Vue 3, TypeScript (strict), Tailwind CSS v4,
+  nuxt-auth-utils for sessions. Tests: Vitest + @nuxt/test-utils, Gherkin .feature
+  files executed via @amiceli/vitest-cucumber (tests/features/ + tests/steps/).
+  Commands: npm test / npm run lint / npm run typecheck.
+  TDD is mandatory: failing test before implementation (red-green-refactor).
+  Markdown specs are the source of truth; .feature files are their executable
+  projection, traced with @<capability> and @req:<slug> tags.
+  Conventions: kebab-case capability names, commit style "<gitmoji>WW: <summary>",
+  mobile-first UI, design tokens from the design-system spec.
