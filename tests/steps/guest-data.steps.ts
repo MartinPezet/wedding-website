@@ -52,16 +52,28 @@ describeFeature(feature, (f) => {
       s.When('the party is retrieved', async () => {
         retrieved = await getParty(db, partyId)
       })
-      s.Then('both guests are returned, each with independent RSVP fields', async () => {
+      s.Then('both guests are returned, each with independent RSVP fields including per-course meal choices', async () => {
         expect(retrieved.guests).toHaveLength(2)
         const { guests } = await import('../../server/db/schema')
         const { eq } = await import('drizzle-orm')
         await db.update(guests)
-          .set({ attending: true, mealChoiceId: 'beef', dietaryNotes: 'no nuts' })
+          .set({ attending: true, starterChoiceId: 'soup', mainChoiceId: 'beef', dessertChoiceId: 'cake', dietaryNotes: 'no nuts' })
           .where(eq(guests.id, retrieved.guests[0]!.id))
         const after = await getParty(db, partyId)
-        expect(after.guests[0]).toMatchObject({ attending: true, mealChoiceId: 'beef', dietaryNotes: 'no nuts' })
-        expect(after.guests[1]).toMatchObject({ attending: null, mealChoiceId: null, dietaryNotes: null })
+        expect(after.guests[0]).toMatchObject({
+          attending: true,
+          starterChoiceId: 'soup',
+          mainChoiceId: 'beef',
+          dessertChoiceId: 'cake',
+          dietaryNotes: 'no nuts',
+        })
+        expect(after.guests[1]).toMatchObject({
+          attending: null,
+          starterChoiceId: null,
+          mainChoiceId: null,
+          dessertChoiceId: null,
+          dietaryNotes: null,
+        })
       })
     })
 
@@ -83,13 +95,43 @@ describeFeature(feature, (f) => {
           phone: '+447911123456',
           guests: [
             { id: knownGuestId, attending: false },
-            { id: 999_999, attending: true, mealChoiceId: 'beef' },
+            { id: 999_999, attending: true, mainChoiceId: 'beef' },
           ],
         })
       })
       s.Then('only guests already recorded for that party are accepted and no new guest rows are created', async () => {
         expect(result.ok).toBe(false)
         expect((await getParty(db, partyId)).guests).toHaveLength(1)
+      })
+    })
+
+    r.RuleScenario('Legacy meal choice migrated', (s) => {
+      let client: Awaited<ReturnType<typeof import('@libsql/client')['createClient']>>
+      const applyMigration = async (file: string) => {
+        const { readFileSync } = await import('node:fs')
+        const sql = readFileSync(`server/db/migrations/${file}`, 'utf8')
+        for (const statement of sql.split('--> statement-breakpoint')) {
+          if (statement.trim()) await client.execute(statement)
+        }
+      }
+      s.Given('data holding single meal choices from before the per-course model', async () => {
+        const { createClient } = await import('@libsql/client')
+        client = createClient({ url: ':memory:' })
+        await applyMigration('0000_init.sql')
+        await client.execute(`INSERT INTO parties (name, token) VALUES ('The Olds', 'legacy-token')`)
+        await client.execute(`INSERT INTO guests (party_id, name, attending, meal_choice_id) VALUES (1, 'Olive Old', 1, 'beef')`)
+        await client.execute(`INSERT INTO guests (party_id, name) VALUES (1, 'Otto Old')`)
+      })
+      s.When('the per-course migration runs', async () => {
+        await applyMigration('0001_menu_courses.sql')
+      })
+      s.Then(`each existing choice is preserved as that guest's main-course choice`, async () => {
+        const { rows } = await client.execute(
+          'SELECT name, starter_choice_id, main_choice_id, dessert_choice_id FROM guests ORDER BY id',
+        )
+        expect(rows[0]).toMatchObject({ name: 'Olive Old', starter_choice_id: null, main_choice_id: 'beef', dessert_choice_id: null })
+        expect(rows[1]).toMatchObject({ name: 'Otto Old', main_choice_id: null })
+        client.close()
       })
     })
   })

@@ -50,13 +50,24 @@ export interface MenuOption {
   description?: string
 }
 
-export interface Menu {
+export type CourseId = 'starter' | 'main' | 'dessert'
+
+export interface MenuCourse {
+  id: CourseId
+  name: string
   options: MenuOption[]
-  childMenu?: MenuOption[]
+  /** children get these when defined, the adult options otherwise */
+  childOptions?: MenuOption[]
+}
+
+export interface Menu {
+  /** only courses that will actually run — any of the three may be absent */
+  courses: MenuCourse[]
 }
 
 export const schedule: ScheduleEvent[] = scheduleJson
 export const travel: TravelInfo = travelJson
 export const faq: FaqEntry[] = faqJson
 export const gifts: Gifts = giftsJson
-export const menu: Menu = menuJson
+// json infers id: string; the union is narrowed here
+export const menu: Menu = menuJson as Menu

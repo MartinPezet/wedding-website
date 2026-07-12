@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { menu } from '~~/shared/content'
+import type { MenuCourse } from '~~/shared/content'
 
 interface GuestForm {
   id: number
   name: string
   isChild: boolean
   attending: '' | 'yes' | 'no'
-  mealChoiceId: string
+  starterChoiceId: string
+  mainChoiceId: string
+  dessertChoiceId: string
   dietaryNotes: string
 }
 
@@ -26,7 +29,9 @@ if (data.value?.party) {
     name: guest.name,
     isChild: guest.isChild,
     attending: guest.attending === null ? '' : guest.attending ? 'yes' : 'no',
-    mealChoiceId: guest.mealChoiceId ?? '',
+    starterChoiceId: guest.starterChoiceId ?? '',
+    mainChoiceId: guest.mainChoiceId ?? '',
+    dessertChoiceId: guest.dessertChoiceId ?? '',
     dietaryNotes: guest.dietaryNotes ?? '',
   }))
   phone.value = data.value.phone ?? ''
@@ -34,11 +39,18 @@ if (data.value?.party) {
   note.value = data.value.party.noteToCouple ?? ''
 }
 
-const allMealOptions = [...menu.options, ...menu.childMenu ?? []]
-const mealsFor = (guest: GuestForm) =>
-  guest.isChild && menu.childMenu?.length ? menu.childMenu : menu.options
-const mealName = (id: string | null) =>
-  allMealOptions.find(option => option.id === id)?.name ?? '—'
+const allMealOptions = menu.courses.flatMap(course => [...course.options, ...course.childOptions ?? []])
+const optionName = (id: string) => allMealOptions.find(option => option.id === id)?.name
+
+const courseField = (course: MenuCourse) => COURSE_FIELDS[course.id]
+const mealsFor = (course: MenuCourse, guest: GuestForm) => optionsFor(course, guest.isChild)
+
+/** locked-summary line: defined-course choice names, e.g. "Soup · Roast Beef · Eton Mess" */
+const choiceSummary = (guest: GuestForm) =>
+  menu.courses
+    .map(course => optionName(guest[courseField(course)]))
+    .filter(Boolean)
+    .join(' · ') || '—'
 
 const anyAttending = computed(() => guests.value.some(guest => guest.attending === 'yes'))
 
@@ -54,32 +66,41 @@ async function submit() {
     error.value = 'Please answer for every guest.'
     return
   }
-  if (guests.value.some(guest => guest.attending === 'yes' && !guest.mealChoiceId)) {
-    error.value = 'Please choose a meal for everyone attending.'
+  if (guests.value.some(guest =>
+    guest.attending === 'yes' && menu.courses.some(course => !guest[courseField(course)]),
+  )) {
+    error.value = 'Please choose every course for everyone attending.'
     return
   }
-  const normalised = normalisePhone(phone.value)
-  if (!normalised) {
-    error.value = 'Please enter a valid phone number.'
-    return
+  // phone only required when someone attends; validate whenever one is entered
+  let normalised: string | null = null
+  if (anyAttending.value || phone.value.trim()) {
+    normalised = normalisePhone(phone.value)
+    if (!normalised) {
+      error.value = 'Please enter a valid phone number.'
+      return
+    }
   }
   pending.value = true
   try {
     await $fetch('/api/rsvp', {
       method: 'POST',
       body: {
-        phone: normalised,
+        phone: normalised ?? '',
         songRequest: song.value || undefined,
         noteToCouple: note.value || undefined,
         guests: guests.value.map(guest => ({
           id: guest.id,
           attending: guest.attending === 'yes',
-          mealChoiceId: guest.attending === 'yes' ? guest.mealChoiceId : undefined,
+          ...Object.fromEntries(menu.courses.map(course => [
+            courseField(course),
+            guest.attending === 'yes' ? guest[courseField(course)] : undefined,
+          ])),
           dietaryNotes: guest.dietaryNotes || undefined,
         })),
       },
     })
-    phone.value = normalised
+    if (normalised) phone.value = normalised
     submitted.value = true
   }
   catch (err) {
@@ -126,7 +147,7 @@ const fieldClass = 'rounded-2xl border border-leaf/40 bg-white/70 px-4 py-3 text
         >
           <p class="font-display text-lg text-ink">{{ guest.name }}</p>
           <p class="mt-1 text-sm text-leaf-deep">
-            {{ guest.attending === 'yes' ? `Attending — ${mealName(guest.mealChoiceId)}`
+            {{ guest.attending === 'yes' ? `Attending — ${choiceSummary(guest)}`
               : guest.attending === 'no' ? 'Not attending' : 'No reply received' }}
           </p>
         </li>
@@ -197,18 +218,25 @@ const fieldClass = 'rounded-2xl border border-leaf/40 bg-white/70 px-4 py-3 text
           </label>
         </div>
         <template v-if="guest.attending === 'yes'">
-          <select
-            v-model="guest.mealChoiceId"
-            :name="`meal-${guest.id}`"
-            required
-            class="mt-3 w-full"
-            :class="fieldClass"
+          <label
+            v-for="course in menu.courses"
+            :key="course.id"
+            class="mt-3 block text-sm text-leaf-deep"
           >
-            <option value="" disabled>Choose a meal</option>
-            <option v-for="option in mealsFor(guest)" :key="option.id" :value="option.id">
-              {{ option.name }}
-            </option>
-          </select>
+            {{ course.name }}
+            <select
+              v-model="guest[courseField(course)]"
+              :name="`meal-${course.id}-${guest.id}`"
+              required
+              class="mt-1 w-full"
+              :class="fieldClass"
+            >
+              <option value="" disabled>Choose a {{ course.name.toLowerCase() }}</option>
+              <option v-for="option in mealsFor(course, guest)" :key="option.id" :value="option.id">
+                {{ option.name }}
+              </option>
+            </select>
+          </label>
           <textarea
             v-model="guest.dietaryNotes"
             :name="`dietary-${guest.id}`"
@@ -222,14 +250,14 @@ const fieldClass = 'rounded-2xl border border-leaf/40 bg-white/70 px-4 py-3 text
 
       <div class="mt-8 flex flex-col gap-3">
         <label class="text-sm uppercase tracking-widest text-petal-deep" for="rsvp-phone">
-          Best contact number
+          Best contact number <span v-if="!anyAttending" class="normal-case tracking-normal text-leaf/80">(optional)</span>
         </label>
         <input
           id="rsvp-phone"
           v-model="phone"
           type="tel"
           name="phone"
-          required
+          :required="anyAttending"
           autocomplete="tel"
           placeholder="Phone number"
           :class="fieldClass"

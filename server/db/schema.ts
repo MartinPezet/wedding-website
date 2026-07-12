@@ -20,7 +20,10 @@ export const guests = sqliteTable('guests', {
   // party contact number lives on the lead guest (lowest sortOrder), E.164
   phone: text('phone'),
   attending: integer('attending', { mode: 'boolean' }),
-  mealChoiceId: text('meal_choice_id'),
+  // one choice per course; a course absent from menu.json stays null
+  starterChoiceId: text('starter_choice_id'),
+  mainChoiceId: text('main_choice_id'),
+  dessertChoiceId: text('dessert_choice_id'),
   dietaryNotes: text('dietary_notes'),
 })
 

@@ -5,17 +5,21 @@ import { readBody } from 'h3'
 import { expect } from 'vitest'
 import { clearNuxtData } from '#imports'
 import { menu } from '../../shared/content'
+import type { MenuCourse } from '../../shared/content'
 
 setVitestCucumberConfiguration({ excludeTags: ['manual'] })
 
 const feature = await loadFeature('tests/features/rsvp-flow.feature')
 
-interface GuestData {
+// course id → guest field; the per-course contract under test
+const COURSE_FIELDS = { starter: 'starterChoiceId', main: 'mainChoiceId', dessert: 'dessertChoiceId' } as const
+type CourseChoiceFields = Partial<Record<(typeof COURSE_FIELDS)[keyof typeof COURSE_FIELDS], string | null>>
+
+interface GuestData extends CourseChoiceFields {
   id: number
   name: string
   isChild: boolean
   attending: boolean | null
-  mealChoiceId: string | null
   dietaryNotes: string | null
 }
 
@@ -28,7 +32,7 @@ interface RsvpData {
 }
 
 const guest = (id: number, name: string, over: Partial<GuestData> = {}): GuestData =>
-  ({ id, name, isChild: false, attending: null, mealChoiceId: null, dietaryNotes: null, ...over })
+  ({ id, name, isChild: false, attending: null, starterChoiceId: null, mainChoiceId: null, dessertChoiceId: null, dietaryNotes: null, ...over })
 
 const rsvpData = (over: Partial<RsvpData> = {}): RsvpData => ({
   party: { name: 'The Smiths', songRequest: null, noteToCouple: null, respondedAt: null },
@@ -38,6 +42,13 @@ const rsvpData = (over: Partial<RsvpData> = {}): RsvpData => ({
   locked: false,
   ...over,
 })
+
+const optionsFor = (course: MenuCourse, isChild: boolean) =>
+  isChild && course.childOptions?.length ? course.childOptions : course.options
+
+/** one valid choice per defined course, as submission fields */
+const fullChoices = (isChild = false): CourseChoiceFields =>
+  Object.fromEntries(menu.courses.map(course => [COURSE_FIELDS[course.id], optionsFor(course, isChild)[0]!.id]))
 
 // POST capture — reset in mountRsvp before each scenario's mount
 let posted: unknown = null
@@ -127,15 +138,54 @@ describeFeature(feature, (f) => {
         wrapper = await mountRsvp(rsvpData({ guests: [guest(1, 'Alice Smith')] }))
         await wrapper.find('input[name="attending-1"][value="yes"]').setValue(true)
       })
-      s.When('the RSVP form is completed', () => {})
-      s.Then('a meal choice from the menu is required and dietary notes may be entered', () => {
-        const meal = wrapper.find('select[name="meal-1"]')
-        expect(meal.exists()).toBe(true)
-        expect(meal.attributes('required')).toBeDefined()
-        for (const option of menu.options) {
-          expect(meal.html()).toContain(option.name)
+      s.When('the RSVP form is completed', () => {
+        expect(menu.courses.length).toBeGreaterThan(0)
+      })
+      s.Then('a choice is required for each course defined in menu.json and dietary notes may be entered', () => {
+        for (const course of menu.courses) {
+          const select = wrapper.find(`select[name="meal-${course.id}-1"]`)
+          expect(select.exists(), `select for ${course.id}`).toBe(true)
+          expect(select.attributes('required')).toBeDefined()
+          for (const option of course.options) {
+            expect(select.html()).toContain(option.name)
+          }
         }
         expect(wrapper.find('textarea[name="dietary-1"]').exists()).toBe(true)
+      })
+    })
+
+    r.RuleScenario('Absent course not offered', (s) => {
+      let db: Awaited<ReturnType<typeof freshDb>>
+      let ids: { partyId: number, guestId: number }
+      let twoCourseMenu: { courses: MenuCourse[] }
+      let result: { ok: boolean }
+      s.Given('a menu that does not define one of the courses', async () => {
+        twoCourseMenu = { courses: menu.courses.filter(course => course.id !== 'dessert') }
+        expect(twoCourseMenu.courses.some(course => course.id === 'dessert')).toBe(false)
+        db = await freshDb()
+        ids = await seedParty(db)
+      })
+      s.When('the RSVP form is completed and validated', async () => {
+        const { saveRsvp } = await import('../../server/utils/rsvp')
+        result = await saveRsvp(db, ids.partyId, {
+          phone: '+447911123456',
+          guests: [{
+            id: ids.guestId,
+            attending: true,
+            starterChoiceId: menu.courses.find(course => course.id === 'starter')!.options[0]!.id,
+            mainChoiceId: menu.courses.find(course => course.id === 'main')!.options[0]!.id,
+            // dessert submitted anyway — must be ignored, not required, not stored
+            dessertChoiceId: 'cake',
+          }],
+        }, { menu: twoCourseMenu })
+      })
+      s.Then('the absent course is neither shown nor required for any guest', async () => {
+        expect(result.ok).toBe(true)
+        const { guests } = await import('../../server/db/schema')
+        const { eq } = await import('drizzle-orm')
+        const [stored] = await db.select().from(guests).where(eq(guests.id, ids.guestId))
+        expect(stored!.dessertChoiceId).toBeNull()
+        expect(stored!.mainChoiceId).toBeTruthy()
       })
     })
 
@@ -146,10 +196,9 @@ describeFeature(feature, (f) => {
         await wrapper.find('input[name="attending-1"][value="no"]').setValue(true)
       })
       s.When('the RSVP is submitted', async () => {
-        await wrapper.find('input[name="phone"]').setValue('07911 123456')
         await submit(wrapper)
       })
-      s.Then('no meal choice is required and the decline is recorded with graceful confirmation copy', () => {
+      s.Then('no course choices are required and the decline is recorded with graceful confirmation copy', () => {
         expect(posted).toMatchObject({ guests: [{ id: 1, attending: false }] })
         expect(wrapper.html()).toMatch(/miss you|sorry you can/i)
       })
@@ -157,19 +206,21 @@ describeFeature(feature, (f) => {
 
     r.RuleScenario('Child menu offered', (s) => {
       let wrapper: Wrapper
-      s.Given('a child-flagged guest marked attending and a child menu in menu.json', async () => {
-        expect(menu.childMenu?.length).toBeGreaterThan(0)
+      let courseWithChildOptions: MenuCourse
+      s.Given('a child-flagged guest marked attending and a course with child options in menu.json', async () => {
+        courseWithChildOptions = menu.courses.find(course => course.childOptions?.length)!
+        expect(courseWithChildOptions).toBeTruthy()
         wrapper = await mountRsvp(rsvpData({ guests: [guest(1, 'Sunny Smith', { isChild: true })] }))
         await wrapper.find('input[name="attending-1"][value="yes"]').setValue(true)
       })
-      s.When('meal options are presented', () => {})
-      s.Then('they are the child menu options', () => {
-        const meal = wrapper.find('select[name="meal-1"]')
-        for (const option of menu.childMenu!) {
-          expect(meal.html()).toContain(option.name)
+      s.When(`that course's options are presented`, () => {})
+      s.Then('they are the child options', () => {
+        const select = wrapper.find(`select[name="meal-${courseWithChildOptions.id}-1"]`)
+        for (const option of courseWithChildOptions.childOptions!) {
+          expect(select.html()).toContain(option.name)
         }
-        for (const option of menu.options) {
-          expect(meal.html()).not.toContain(option.name)
+        for (const option of courseWithChildOptions.options) {
+          expect(select.html()).not.toContain(option.name)
         }
       })
     })
@@ -187,7 +238,7 @@ describeFeature(feature, (f) => {
         const { saveRsvp } = await import('../../server/utils/rsvp')
         const result = await saveRsvp(db, ids.partyId, {
           phone: '07911 123456',
-          guests: [{ id: ids.guestId, attending: true, mealChoiceId: menu.options[0]!.id }],
+          guests: [{ id: ids.guestId, attending: true, ...fullChoices() }],
         })
         expect(result.ok).toBe(true)
       })
@@ -223,6 +274,29 @@ describeFeature(feature, (f) => {
         expect(serverResult.ok).toBe(false)
       })
     })
+
+    r.RuleScenario('Declining party without phone', (s) => {
+      let wrapper: Wrapper
+      let serverResult: { ok: boolean }
+      s.Given('a party where every guest is marked not attending and no phone number is entered', async () => {
+        wrapper = await mountRsvp(rsvpData({ guests: [guest(1, 'Alice Smith')] }))
+        await wrapper.find('input[name="attending-1"][value="no"]').setValue(true)
+      })
+      s.When('the RSVP is submitted', async () => {
+        await submit(wrapper)
+        const db = await freshDb()
+        const ids = await seedParty(db)
+        const { saveRsvp } = await import('../../server/utils/rsvp')
+        serverResult = await saveRsvp(db, ids.partyId, {
+          phone: '',
+          guests: [{ id: ids.guestId, attending: false }],
+        })
+      })
+      s.Then('the submission is accepted with no phone requirement', () => {
+        expect(posted).toMatchObject({ guests: [{ id: 1, attending: false }] })
+        expect(serverResult.ok).toBe(true)
+      })
+    })
   })
 
   f.Rule('Song request and note to couple', (r) => {
@@ -239,7 +313,7 @@ describeFeature(feature, (f) => {
           phone: '+447911123456',
           songRequest: 'Dancing Queen',
           noteToCouple: 'So happy for you both!',
-          guests: [{ id: ids.guestId, attending: true, mealChoiceId: menu.options[0]!.id }],
+          guests: [{ id: ids.guestId, attending: true, ...fullChoices() }],
         })
         expect(result).toEqual({ ok: true })
       })
@@ -259,17 +333,23 @@ describeFeature(feature, (f) => {
   f.Rule('RSVP editable until deadline', (r) => {
     r.RuleScenario('Revisit before deadline', (s) => {
       let wrapper: Wrapper
-      s.Given('a responded party before the deadline', () => {})
+      let choices: CourseChoiceFields
+      s.Given('a responded party before the deadline', () => {
+        choices = fullChoices()
+      })
       s.When('it revisits its RSVP link', async () => {
         wrapper = await mountRsvp(rsvpData({
           party: { name: 'The Smiths', songRequest: 'Dancing Queen', noteToCouple: null, respondedAt: '2026-01-01T00:00:00Z' },
-          guests: [guest(1, 'Alice Smith', { attending: true, mealChoiceId: menu.options[1]!.id, dietaryNotes: 'no nuts' })],
+          guests: [guest(1, 'Alice Smith', { attending: true, ...choices, dietaryNotes: 'no nuts' })],
           phone: '+447911123456',
         }))
       })
       s.Then('the form is pre-filled with current answers and can be resubmitted', async () => {
         expect((wrapper.find('input[name="attending-1"][value="yes"]').element as HTMLInputElement).checked).toBe(true)
-        expect((wrapper.find('select[name="meal-1"]').element as HTMLSelectElement).value).toBe(menu.options[1]!.id)
+        for (const course of menu.courses) {
+          const select = wrapper.find(`select[name="meal-${course.id}-1"]`)
+          expect((select.element as HTMLSelectElement).value).toBe(choices[COURSE_FIELDS[course.id]])
+        }
         expect((wrapper.find('textarea[name="dietary-1"]').element as HTMLTextAreaElement).value).toBe('no nuts')
         expect((wrapper.find('input[name="phone"]').element as HTMLInputElement).value).toBe('+447911123456')
         expect((wrapper.find('input[name="song"]').element as HTMLInputElement).value).toBe('Dancing Queen')
@@ -285,7 +365,7 @@ describeFeature(feature, (f) => {
         wrapper = await mountRsvp(rsvpData({
           locked: true,
           deadline: '2020-01-01T00:00:00Z',
-          guests: [guest(1, 'Alice Smith', { attending: true, mealChoiceId: menu.options[0]!.id })],
+          guests: [guest(1, 'Alice Smith', { attending: true, ...fullChoices() })],
         }))
       })
       s.Then('a read-only summary is shown with instructions to contact the couple', () => {

@@ -1,10 +1,11 @@
+import { normalisePhone } from '../../shared/utils/phone'
 import { guests, parties } from '../db/schema'
 import type { Db } from './db'
 import { generatePartyToken } from './token'
 
 export interface NewParty {
   name: string
-  guests: { name: string, isChild?: boolean }[]
+  guests: { name: string, isChild?: boolean, phone?: string }[]
 }
 
 export async function createParty(db: Db, input: NewParty) {
@@ -17,6 +18,7 @@ export async function createParty(db: Db, input: NewParty) {
       name: guest.name,
       isChild: guest.isChild ?? false,
       sortOrder: index,
+      phone: guest.phone ? normalisePhone(guest.phone) : null,
     })))
   }
   return party!

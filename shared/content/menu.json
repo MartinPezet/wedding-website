@@ -1,11 +1,37 @@
 {
-  "options": [
-    { "id": "beef", "name": "Roast Beef", "description": "Slow-roasted beef with seasonal vegetables and red wine jus (placeholder)" },
-    { "id": "fish", "name": "Pan-Seared Salmon", "description": "Salmon fillet with crushed new potatoes and lemon butter (placeholder)" },
-    { "id": "veggie", "name": "Wild Mushroom Wellington", "description": "Vegetarian wellington with root vegetables and herb gravy (placeholder)" }
-  ],
-  "childMenu": [
-    { "id": "child-chicken", "name": "Chicken Goujons", "description": "With chips and peas (placeholder)" },
-    { "id": "child-pasta", "name": "Tomato Pasta", "description": "With hidden-vegetable sauce (placeholder)" }
+  "courses": [
+    {
+      "id": "starter",
+      "name": "Starter",
+      "options": [
+        { "id": "soup", "name": "Roasted Tomato Soup", "description": "With basil oil and sourdough (placeholder)" },
+        { "id": "prawns", "name": "Garlic Prawns", "description": "With lemon aioli and charred bread (placeholder)" },
+        { "id": "bruschetta", "name": "Tomato Bruschetta", "description": "Vegetarian, with balsamic glaze (placeholder)" }
+      ]
+    },
+    {
+      "id": "main",
+      "name": "Main",
+      "options": [
+        { "id": "beef", "name": "Roast Beef", "description": "Slow-roasted beef with seasonal vegetables and red wine jus (placeholder)" },
+        { "id": "fish", "name": "Pan-Seared Salmon", "description": "Salmon fillet with crushed new potatoes and lemon butter (placeholder)" },
+        { "id": "veggie", "name": "Wild Mushroom Wellington", "description": "Vegetarian wellington with root vegetables and herb gravy (placeholder)" }
+      ],
+      "childOptions": [
+        { "id": "child-chicken", "name": "Chicken Goujons", "description": "With chips and peas (placeholder)" },
+        { "id": "child-pasta", "name": "Tomato Pasta", "description": "With hidden-vegetable sauce (placeholder)" }
+      ]
+    },
+    {
+      "id": "dessert",
+      "name": "Dessert",
+      "options": [
+        { "id": "cake", "name": "Lemon Drizzle Cake", "description": "With clotted cream (placeholder)" },
+        { "id": "eton", "name": "Eton Mess", "description": "Strawberries, meringue, cream (placeholder)" }
+      ],
+      "childOptions": [
+        { "id": "child-icecream", "name": "Ice Cream Sundae", "description": "Two scoops with sprinkles (placeholder)" }
+      ]
+    }
   ]
 }

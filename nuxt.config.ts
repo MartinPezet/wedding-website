@@ -24,6 +24,10 @@ export default defineNuxtConfig({
   runtimeConfig: {
     // set via NUXT_SITE_PASSWORD
     sitePassword: '',
+    // set via NUXT_ADMIN_PASSWORD
+    adminPassword: '',
+    // set via NUXT_BACKUP_SECRET — bearer auth for the nightly backup fetch
+    backupSecret: '',
     // set via NUXT_DB_URL / NUXT_DB_AUTH_TOKEN; defaults to local file
     dbUrl: '',
     dbAuthToken: '',

@@ -20,9 +20,11 @@
     "@libsql/client": "^0.17.4",
     "@nuxt/image": "^2.0.0",
     "drizzle-orm": "^0.45.2",
+    "exceljs": "^4.4.0",
     "libphonenumber-js": "^1.13.8",
     "nuxt": "^4.4.8",
     "nuxt-auth-utils": "^0.5.29",
+    "papaparse": "^5.5.4",
     "vue": "^3.5.39"
   },
   "devDependencies": {
@@ -31,6 +33,7 @@
     "@nuxt/test-utils": "^4.0.3",
     "@tailwindcss/vite": "^4.3.2",
     "@types/node": "^26.1.1",
+    "@types/papaparse": "^5.5.2",
     "@vue/test-utils": "^2.4.11",
     "drizzle-kit": "^0.31.10",
     "eslint": "^10.6.0",
