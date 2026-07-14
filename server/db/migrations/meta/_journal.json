@@ -15,6 +15,13 @@
       "when": 1783900800000,
       "tag": "0001_menu_courses",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1783987200000,
+      "tag": "0002_seating",
+      "breakpoints": true
     }
   ]
 }

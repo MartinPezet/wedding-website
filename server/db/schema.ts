@@ -1,5 +1,16 @@
 import { relations } from 'drizzle-orm'
-import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import { integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+
+export const tables = sqliteTable('tables', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  name: text('name').notNull(),
+  shape: text('shape', { enum: ['round', 'rect'] }).notNull().default('round'),
+  // logical canvas units (1000×700 viewBox), scaled for screen and print
+  x: real('x').notNull().default(0),
+  y: real('y').notNull().default(0),
+  capacity: integer('capacity').notNull().default(8),
+  sortOrder: integer('sort_order').notNull().default(0),
+})
 
 export const parties = sqliteTable('parties', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -25,6 +36,9 @@ export const guests = sqliteTable('guests', {
   mainChoiceId: text('main_choice_id'),
   dessertChoiceId: text('dessert_choice_id'),
   dietaryNotes: text('dietary_notes'),
+  // seating: null = unassigned; seatIndex into seatPositions(shape, capacity)
+  tableId: integer('table_id').references(() => tables.id),
+  seatIndex: integer('seat_index'),
 })
 
 export const settings = sqliteTable('settings', {

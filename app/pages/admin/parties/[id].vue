@@ -87,6 +87,9 @@ watch(party, load, { immediate: true })
 const courseField = (course: MenuCourse) => COURSE_FIELDS[course.id]
 const mealsFor = (course: MenuCourse, row: AnswerRow) => optionsFor(course, row.isChild)
 
+// typed-route inference overflows (TS2321) on dynamic URLs now the API has grown; erase it here
+const rawFetch = $fetch as (url: string, opts?: { method?: string, body?: unknown }) => Promise<unknown>
+
 async function call(action: () => Promise<unknown>, done: string) {
   error.value = ''
   notice.value = ''
@@ -110,7 +113,7 @@ function removeGuest(index: number) {
   guestRows.value.splice(index, 1)
 }
 
-const saveDetails = () => call(() => $fetch(`/api/admin/parties/${partyId}`, {
+const saveDetails = () => call(() => rawFetch(`/api/admin/parties/${partyId}`, {
   method: 'PATCH',
   body: {
     name: name.value,
@@ -123,7 +126,7 @@ const saveDetails = () => call(() => $fetch(`/api/admin/parties/${partyId}`, {
   },
 }), 'Party details saved.')
 
-const saveAnswers = () => call(() => $fetch(`/api/admin/parties/${partyId}/rsvp`, {
+const saveAnswers = () => call(() => rawFetch(`/api/admin/parties/${partyId}/rsvp`, {
   method: 'PUT',
   body: {
     phone: phone.value || undefined,
@@ -145,12 +148,12 @@ const saveAnswers = () => call(() => $fetch(`/api/admin/parties/${partyId}/rsvp`
 
 const regenerateToken = () => {
   if (!confirm('Regenerate the token? The old RSVP link and QR code will stop working.')) return
-  return call(() => $fetch(`/api/admin/parties/${partyId}/token`, { method: 'POST' }), 'New RSVP link generated.')
+  return call(() => rawFetch(`/api/admin/parties/${partyId}/token`, { method: 'POST' }), 'New RSVP link generated.')
 }
 
 async function deleteParty() {
   if (!confirm(`Delete ${party.value?.name} and all their guests? This cannot be undone.`)) return
-  await call(() => $fetch(`/api/admin/parties/${partyId}`, { method: 'DELETE' }), '')
+  await call(() => rawFetch(`/api/admin/parties/${partyId}`, { method: 'DELETE' }), '')
   await navigateTo('/admin')
 }
 
