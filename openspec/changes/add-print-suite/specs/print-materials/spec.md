@@ -26,11 +26,11 @@ The system SHALL render an A5 RSVP letter per party: party name(s), invite copy,
 - **THEN** the phone opens the site with that party's token, bypassing the password and identifying the party
 
 ### Requirement: Large-format seating chart print
-The system SHALL render the persisted seating layout as a large-format (A2, optionally A1) printable chart in site style, showing table names and seated guest names.
+The system SHALL render the persisted seating assignments as a large-format (A2, optionally A1) printable chart in site style, listing each table with the guests seated at it.
 
-#### Scenario: Chart matches editor
+#### Scenario: Chart lists each table's guests
 - **WHEN** the admin prints the seating chart
-- **THEN** table positions, names, and guest assignments match the seating editor's current state
+- **THEN** each table is listed with its seated guests, matching the seating editor's assignments
 
 ### Requirement: Place cards
 The system SHALL render place cards on A4 sheets with fold lines and crop marks: guest name and a meal marker per card, ordered by table and seat.

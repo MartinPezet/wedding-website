@@ -8,5 +8,10 @@ context: |
   TDD is mandatory: failing test before implementation (red-green-refactor).
   Markdown specs are the source of truth; .feature files are their executable
   projection, traced with @<capability> and @req:<slug> tags.
+  Layout: app/ (Vue app: pages, components, layouts, composables), server/ (Nitro
+  routes, incl. gate + RSVP endpoints), shared/ (isomorphic code; shared/content/
+  holds site copy/data as typed TS + JSON), tests/ (features/, steps/, unit/).
+  Input is validated server-side at every trust boundary (gate, RSVP).
+  Scenarios that can't be automated carry @manual and are skipped by the runner.
   Conventions: kebab-case capability names, commit style "<gitmoji>WW: <summary>",
   mobile-first UI, design tokens from the design-system spec.

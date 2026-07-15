@@ -2,7 +2,7 @@
 Feature: Print materials
   Admin-only print routes: QR invite letters, seating chart, place cards, handouts.
 
-  @req:shared-print-layer-in-site-style
+  @req:shared-print-layer-in-site-style @manual
   Rule: Shared print layer in site style
     Correct page sizing, exact colours, floral tokens, on-screen preview.
 

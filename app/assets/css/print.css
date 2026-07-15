@@ -1,0 +1,68 @@
+/*
+ * Shared print layer. Each print route stacks <PrintPage size> blocks that
+ * preview as paper-sized sheets on screen and print 1:1 with exact colour.
+ * Page margins live as element padding so screen and paper match exactly
+ * (@page margin is 0); floral colours survive via print-color-adjust: exact.
+ */
+
+.print-page {
+  position: relative;
+  box-sizing: border-box;
+  background: var(--color-cream);
+  color: var(--color-ink);
+  overflow: hidden;
+}
+
+/* margins live as body padding; --page-pad lets the bleed layer sit outside it
+   so edge-to-edge florals reach the sheet edge (clipped by .print-page) */
+.print-page-a5 { width: 148mm; min-height: 210mm; --page-pad: 12mm; }
+.print-page-a4 { width: 210mm; min-height: 297mm; --page-pad: 14mm; }
+.print-page-a4-landscape { width: 297mm; min-height: 210mm; --page-pad: 12mm; }
+.print-page-a2 { width: 420mm; min-height: 594mm; --page-pad: 18mm; }
+.print-page-a2-landscape { width: 594mm; min-height: 420mm; --page-pad: 18mm; }
+.print-page-a1 { width: 594mm; min-height: 841mm; --page-pad: 20mm; }
+.print-page-a1-landscape { width: 841mm; min-height: 594mm; --page-pad: 20mm; }
+
+.print-page-body { padding: var(--page-pad, 12mm); }
+.print-page-bleed { position: absolute; inset: 0; overflow: hidden; }
+
+@media screen {
+  .print-page {
+    box-shadow: 0 4px 24px rgba(74, 59, 64, 0.15);
+    margin: 1rem auto;
+  }
+}
+
+@media print {
+  @page { margin: 0; }
+  @page a5 { size: A5; }
+  @page a4 { size: A4; }
+  @page a4-landscape { size: A4 landscape; }
+  @page a2 { size: A2; }
+  @page a2-landscape { size: A2 landscape; }
+  @page a1 { size: A1; }
+  @page a1-landscape { size: A1 landscape; }
+
+  html, body { background: #fff; }
+
+  .no-print { display: none !important; }
+
+  .print-page {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+    break-after: page;
+    box-shadow: none;
+    margin: 0;
+    width: 100%;
+    min-height: auto;
+  }
+  .print-page:last-child { break-after: auto; }
+
+  .print-page-a5 { page: a5; }
+  .print-page-a4 { page: a4; }
+  .print-page-a4-landscape { page: a4-landscape; }
+  .print-page-a2 { page: a2; }
+  .print-page-a2-landscape { page: a2-landscape; }
+  .print-page-a1 { page: a1; }
+  .print-page-a1-landscape { page: a1-landscape; }
+}

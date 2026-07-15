@@ -1,5 +1,6 @@
 import faqJson from './faq.json'
 import giftsJson from './gifts.json'
+import handoutJson from './handout.json'
 import menuJson from './menu.json'
 import scheduleJson from './schedule.json'
 import travelJson from './hotels.json'
@@ -65,9 +66,20 @@ export interface Menu {
   courses: MenuCourse[]
 }
 
+/** on-the-day printed handout: ordered sections, each a title + line items */
+export interface HandoutSection {
+  title: string
+  items: string[]
+}
+
+export interface Handout {
+  sections: HandoutSection[]
+}
+
 export const schedule: ScheduleEvent[] = scheduleJson
 export const travel: TravelInfo = travelJson
 export const faq: FaqEntry[] = faqJson
 export const gifts: Gifts = giftsJson
 // json infers id: string; the union is narrowed here
 export const menu: Menu = menuJson as Menu
+export const handout: Handout = handoutJson

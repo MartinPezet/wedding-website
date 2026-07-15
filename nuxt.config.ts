@@ -20,7 +20,7 @@ export default defineNuxtConfig({
       ],
     },
   },
-  css: ['~/assets/css/main.css'],
+  css: ['~/assets/css/main.css', '~/assets/css/print.css'],
   runtimeConfig: {
     // set via NUXT_SITE_PASSWORD
     sitePassword: '',
