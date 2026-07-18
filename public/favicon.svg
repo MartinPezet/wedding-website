@@ -13,8 +13,8 @@
       <use href="#pt" transform="rotate(315)"/>
     </g>
   </defs>
-  <use href="#ring" fill="#e7b3b8"/>
-  <use href="#ring" transform="rotate(22.5) scale(0.64)" fill="#d6939a"/>
-  <use href="#ring" transform="scale(0.34)" fill="#bc747e"/>
-  <circle r="5" fill="#96545e"/>
+  <use href="#ring" fill="#a9bce4"/>
+  <use href="#ring" transform="rotate(22.5) scale(0.64)" fill="#5570b4"/>
+  <use href="#ring" transform="scale(0.34)" fill="#7e97d0"/>
+  <circle r="5" fill="#4c66ac"/>
 </svg>

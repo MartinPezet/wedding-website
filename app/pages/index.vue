@@ -7,7 +7,7 @@
       Ciera <span class="text-petal">&amp;</span> Martin
     </h1>
 
-    <FloralFrame variant="arch" class="mt-12 w-64 sm:w-80 md:w-102">
+    <FloralArch variant="arch" class="mt-12 w-64 sm:w-80 md:w-102">
       <NuxtImg
         src="/photos/couple.jpg"
         alt="Ciera and Martin"
@@ -16,7 +16,7 @@
         sizes="256px sm:320px"
         class="h-auto w-full object-cover"
       />
-    </FloralFrame>
+    </FloralArch>
 
     <p class="mt-10 text-leaf-deep">
       Everything you need is here — the

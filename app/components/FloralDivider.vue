@@ -1,5 +1,6 @@
 <script setup lang="ts">
-// Section divider from the mockup (a-div): leafy curve with a small bloom.
+// Section divider (mockup 2a c-div): leafy curve with a small hydrangea
+// floret cluster at its centre.
 const uid = useId()
 const ref_ = (name: string) => `#${uid}-${name}`
 </script>
@@ -7,22 +8,26 @@ const ref_ = (name: string) => `#${uid}-${name}`
 <template>
   <svg viewBox="-80 -34 160 44" fill="none" aria-hidden="true">
     <defs>
-      <path :id="`${uid}-pt`" d="M0,3 C-13,-4 -15,-27 0,-38 C15,-27 13,-4 0,3 Z" />
-      <path :id="`${uid}-lf`" d="M0,0 C-13,-12 -15,-38 0,-58 C15,-38 13,-12 0,0 Z" />
-      <g :id="`${uid}-ring`">
-        <use v-for="i in 8" :key="i" :href="ref_('pt')" :transform="`rotate(${(i - 1) * 45})`" />
+      <path :id="`${uid}-fp1`" d="M0,1.5 C-5.5,-1.5 -6.5,-11 0,-15.5 C6.5,-11 5.5,-1.5 0,1.5 Z" fill="var(--color-petal-soft)" />
+      <path :id="`${uid}-fp2`" d="M0,1.5 C-5.5,-1.5 -6.5,-11 0,-15.5 C6.5,-11 5.5,-1.5 0,1.5 Z" fill="var(--color-petal)" />
+      <path :id="`${uid}-lf1`" d="M0,0 C-15,-10 -17,-36 0,-54 C17,-36 15,-10 0,0 Z" fill="var(--color-leaf)" />
+      <path :id="`${uid}-lf2`" d="M0,0 C-15,-10 -17,-36 0,-54 C17,-36 15,-10 0,0 Z" fill="var(--color-leaf-soft)" />
+      <g :id="`${uid}-fla`">
+        <use v-for="i in 4" :key="i" :href="ref_('fp1')" :transform="`rotate(${(i - 1) * 90})`" />
+        <circle r="2.6" fill="var(--color-gold-soft)" />
+      </g>
+      <g :id="`${uid}-flb`">
+        <use v-for="i in 4" :key="i" :href="ref_('fp2')" :transform="`rotate(${(i - 1) * 90})`" />
+        <circle r="2.6" fill="var(--color-gold-soft)" />
       </g>
     </defs>
     <path d="M-72,0 Q0,-13 72,0" stroke="var(--color-leaf)" stroke-width="2" />
-    <use :href="ref_('lf')" transform="translate(-42,-5) rotate(-108) scale(0.28)" fill="var(--color-leaf)" />
-    <use :href="ref_('lf')" transform="translate(42,-5) rotate(108) scale(0.28)" fill="var(--color-leaf)" />
-    <use :href="ref_('lf')" transform="translate(-24,-8) rotate(-96) scale(0.22)" fill="var(--color-leaf-soft)" />
-    <use :href="ref_('lf')" transform="translate(24,-8) rotate(96) scale(0.22)" fill="var(--color-leaf-soft)" />
-    <g transform="translate(0,-7) scale(0.3)">
-      <use :href="ref_('ring')" fill="var(--color-petal-soft)" />
-      <use :href="ref_('ring')" transform="rotate(22.5) scale(0.64)" fill="var(--color-petal-mid)" />
-      <use :href="ref_('ring')" transform="scale(0.34)" fill="var(--color-petal)" />
-      <circle r="5" fill="var(--color-petal-deep)" />
-    </g>
+    <use :href="ref_('lf1')" transform="translate(-42,-5) rotate(-108) scale(0.28)" />
+    <use :href="ref_('lf1')" transform="translate(42,-5) rotate(108) scale(0.28)" />
+    <use :href="ref_('lf2')" transform="translate(-24,-8) rotate(-96) scale(0.22)" />
+    <use :href="ref_('lf2')" transform="translate(24,-8) rotate(96) scale(0.22)" />
+    <use :href="ref_('flb')" transform="translate(0,-9) scale(0.85)" />
+    <use :href="ref_('fla')" transform="translate(-11,-6) scale(0.6)" />
+    <use :href="ref_('fla')" transform="translate(11,-6) scale(0.6)" />
   </svg>
 </template>
