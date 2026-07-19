@@ -46,6 +46,8 @@ const venueLine = 'Huntsham Court, Devon'
     <PrintPage v-for="entry in letters" :key="entry.party.id" size="a5">
       <template #bleed>
         <FloralHeader />
+        <FloralTulipCorner class="absolute bottom-0 left-0 w-24" />
+        <FloralTulipCorner class="absolute bottom-0 right-0 w-24 -scale-x-100" />
       </template>
       <article data-letter class="flex min-h-full flex-col items-center text-center">
         <div class="flex w-full flex-col items-center">

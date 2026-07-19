@@ -1,4 +1,5 @@
 // @vitest-environment nuxt
+import { readFileSync } from 'node:fs'
 import { mockNuxtImport, mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import { describeFeature, loadFeature, setVitestCucumberConfiguration } from '@amiceli/vitest-cucumber'
 import { expect } from 'vitest'
@@ -186,6 +187,31 @@ describeFeature(feature, (f) => {
           expect(wrapper.text()).toContain(section.title)
           for (const item of section.items) expect(wrapper.text()).toContain(item)
         }
+      })
+    })
+  })
+
+  f.Rule('Tulip corner art on letters and handout', (r) => {
+    // source-level: the corner art component is placed in each template
+    r.RuleScenario('Letters carry tulip corners', (s) => {
+      let src = ''
+      s.Given('the RSVP letters print page', () => {
+        src = readFileSync('app/pages/admin/print/letters.vue', 'utf8')
+      })
+      s.When('its markup is inspected', () => {})
+      s.Then('the tulip corner art is placed on each letter page', () => {
+        expect(src).toContain('FloralTulipCorner')
+      })
+    })
+
+    r.RuleScenario('Handout carries tulip corners', (s) => {
+      let src = ''
+      s.Given('the day handout print page', () => {
+        src = readFileSync('app/pages/admin/print/handout.vue', 'utf8')
+      })
+      s.When('its markup is inspected', () => {})
+      s.Then('the tulip corner art is placed on the handout page', () => {
+        expect(src).toContain('FloralTulipCorner')
       })
     })
   })

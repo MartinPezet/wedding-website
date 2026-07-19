@@ -11,6 +11,8 @@ const couple = 'Ciera & Martin'
   <PrintPage size="a5">
     <template #bleed>
       <FloralHeader />
+      <FloralTulipCorner class="absolute bottom-0 left-0 w-24" />
+      <FloralTulipCorner class="absolute bottom-0 right-0 w-24 -scale-x-100" />
     </template>
     <article class="flex min-h-full flex-col text-center">
       <div>

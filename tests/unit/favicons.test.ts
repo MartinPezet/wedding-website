@@ -11,9 +11,11 @@ describe('favicon', () => {
     return m![1]!
   }
 
-  it('favicon.svg uses the theme palette colours', () => {
+  it('favicon.svg is a hydrangea mophead in theme palette colours', () => {
     const svg = readFileSync('public/favicon.svg', 'utf8').toLowerCase()
-    for (const name of ['petal-soft', 'petal-mid', 'petal', 'petal-deep']) {
+    // hydrangea floret petal, not the old daisy petal
+    expect(svg, 'floret petal path').toContain('-6.5,-11 0,-15.5')
+    for (const name of ['petal-soft', 'petal', 'petal-mid', 'gold-soft']) {
       expect(svg, `favicon carries --color-${name}`).toContain(token(name).toLowerCase())
     }
   })

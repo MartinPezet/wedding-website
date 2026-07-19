@@ -11,25 +11,36 @@ const color = (name) => {
   return m[1]
 }
 
-const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-42 -42 84 84">
-  <!-- a-bloom from the design system; generated from main.css @theme by scripts/generate-favicons.mjs -->
+// hydrangea mophead (design-system c-bloom): 10 four-petal florets in three
+// tints with gold-soft centres
+const floret = (id, fill) =>
+  `<g id="${id}">`
+  + [0, 90, 180, 270].map(a =>
+    `<use href="#fp" transform="rotate(${a})" fill="${fill}"/>`).join('')
+  + `<circle r="2.6" fill="${color('gold-soft')}"/></g>`
+
+const bloom = [
+  ['flb', 'translate(0,-28) rotate(10)'],
+  ['fla', 'translate(24,-16) rotate(40) scale(0.92)'],
+  ['flc', 'translate(29,8) rotate(-20) scale(0.85)'],
+  ['fla', 'translate(12,27) rotate(25) scale(0.95)'],
+  ['flb', 'translate(-13,28) rotate(-35) scale(0.9)'],
+  ['flc', 'translate(-28,9) rotate(15) scale(0.88)'],
+  ['fla', 'translate(-25,-17) rotate(-42) scale(0.94)'],
+  ['flc', 'translate(-9,-8) rotate(30) scale(0.8)'],
+  ['flb', 'translate(11,-4) rotate(-15) scale(1.05)'],
+  ['fla', 'translate(0,12) rotate(55) scale(0.75)'],
+].map(([id, t]) => `<use href="#${id}" transform="${t}"/>`).join('\n  ')
+
+const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-46 -46 92 92">
+  <!-- hydrangea mophead from the design system; generated from main.css @theme by scripts/generate-favicons.mjs -->
   <defs>
-    <path id="pt" d="M0,3 C-13,-4 -15,-27 0,-38 C15,-27 13,-4 0,3 Z"/>
-    <g id="ring">
-      <use href="#pt"/>
-      <use href="#pt" transform="rotate(45)"/>
-      <use href="#pt" transform="rotate(90)"/>
-      <use href="#pt" transform="rotate(135)"/>
-      <use href="#pt" transform="rotate(180)"/>
-      <use href="#pt" transform="rotate(225)"/>
-      <use href="#pt" transform="rotate(270)"/>
-      <use href="#pt" transform="rotate(315)"/>
-    </g>
+    <path id="fp" d="M0,1.5 C-5.5,-1.5 -6.5,-11 0,-15.5 C6.5,-11 5.5,-1.5 0,1.5 Z"/>
+    ${floret('fla', color('petal-soft'))}
+    ${floret('flb', color('petal'))}
+    ${floret('flc', color('petal-mid'))}
   </defs>
-  <use href="#ring" fill="${color('petal-soft')}"/>
-  <use href="#ring" transform="rotate(22.5) scale(0.64)" fill="${color('petal-mid')}"/>
-  <use href="#ring" transform="scale(0.34)" fill="${color('petal')}"/>
-  <circle r="5" fill="${color('petal-deep')}"/>
+  ${bloom}
 </svg>
 `
 

@@ -27,7 +27,7 @@ watch(
     <header
       class="sticky top-0 z-50 border-b border-ink/10 bg-cream/60 backdrop-blur-md"
     >
-      <FloralHeader />
+      <FloralHeader floral-classes="md:w-[50vw]" />
       <div
         class="flex flex-col items-center sm:block mx-auto max-w-3xl px-6 pt-4 pb-1 text-center sm:py-3"
       >
@@ -108,6 +108,8 @@ watch(
       <slot class="pt-12" />
     </main>
     <footer class="relative z-10 py-10 text-center">
+      <FloralTulipCorner class="pointer-events-none absolute bottom-0 -left-2 w-14 sm:-left-3 sm:w-32" />
+      <FloralTulipCorner class="pointer-events-none absolute bottom-0 -right-2 w-14 -scale-x-100 sm:-right-3 sm:w-32" />
       <FloralDivider class="mx-auto w-40" />
       <p class="mt-3 font-display text-2xl text-ink">
         C <span class="italic text-petal">&amp;</span> M

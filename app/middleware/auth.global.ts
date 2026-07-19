@@ -1,5 +1,5 @@
 export default defineNuxtRouteMiddleware((to) => {
-  if (to.path === '/welcome') return
+  if (to.path === '/welcome' || to.path === '/save-the-date') return
   const { loggedIn, session } = useUserSession()
   if (to.path.startsWith('/admin')) {
     if (to.path === '/admin/login') return

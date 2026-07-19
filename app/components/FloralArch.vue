@@ -136,8 +136,8 @@ const ref_ = (name: string) => `#${uid}-${name}`
         <use :href="ref_('lf2')" transform="translate(327,133) rotate(-158) scale(0.45)" />
         <use :href="ref_('lf1')" transform="translate(333,152) rotate(119) scale(0.5)" />
         <use :href="ref_('lf1')" transform="translate(336,164) rotate(155) scale(0.55)" />
-        <use :href="ref_('flb')" transform="translate(1,140) rotate(-30) scale(0.7)" />
-        <use :href="ref_('bloomX')" transform="translate(20,104) rotate(-24) scale(0.44)" />
+        <use :href="ref_('flb')" transform="translate(20,104) rotate(-30) scale(0.7)" />
+        <use :href="ref_('bloomX')" transform="translate(1,140) rotate(-24) scale(0.44)" />
         <use :href="ref_('bloomX')" transform="translate(46,73) rotate(-15) scale(0.4)" />
         <use :href="ref_('flc')" transform="translate(84,46) rotate(45) scale(0.75)" />
         <use :href="ref_('bloomX')" transform="translate(116,32) rotate(-8) scale(0.46)" />
@@ -145,8 +145,8 @@ const ref_ = (name: string) => `#${uid}-${name}`
         <use :href="ref_('bloomX')" transform="translate(214,32) rotate(12) scale(0.46)" />
         <use :href="ref_('flc')" transform="translate(246,46) rotate(-35) scale(0.75)" />
         <use :href="ref_('bloomX')" transform="translate(284,73) rotate(20) scale(0.4)" />
-        <use :href="ref_('bloomX')" transform="translate(310,104) rotate(24) scale(0.44)" />
-        <use :href="ref_('fla')" transform="translate(329,140) rotate(30) scale(0.7)" />
+        <use :href="ref_('bloomX')" transform="translate(329,140) rotate(24) scale(0.44)" />
+        <use :href="ref_('fla')" transform="translate(310,104) rotate(30) scale(0.7)" />
         <template v-if="variant === 'arch'">
           <g transform="translate(20,446)">
             <use :href="ref_('tstem')" transform="rotate(-14) scale(0.7)" />

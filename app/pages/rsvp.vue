@@ -118,7 +118,7 @@ useSeoMeta({
   description: 'Let Ciera and Martin know if you can make it.',
 })
 
-const fieldClass = 'rounded-2xl border border-leaf/40 bg-white/70 px-4 py-3 text-ink placeholder:text-leaf/60 focus:border-petal focus:outline-none'
+const fieldClass = 'rounded-2xl border border-leaf/40 bg-white/70 px-4 py-3 text-ink placeholder:text-leaf/60 transition-colors hover:border-petal focus:border-petal focus:outline-none'
 </script>
 
 <template>
@@ -196,25 +196,43 @@ const fieldClass = 'rounded-2xl border border-leaf/40 bg-white/70 px-4 py-3 text
       >
         <legend class="px-2 font-display text-lg text-ink">{{ guest.name }}</legend>
         <div class="flex flex-col gap-2 sm:flex-row sm:gap-6">
-          <label class="flex items-center gap-2 text-leaf-deep">
-            <input
-              v-model="guest.attending"
-              type="radio"
-              :name="`attending-${guest.id}`"
-              value="yes"
-              class="accent-petal"
-            >
-            Joyfully accepts
-          </label>
-          <label class="flex items-center gap-2 text-leaf-deep">
-            <input
-              v-model="guest.attending"
-              type="radio"
-              :name="`attending-${guest.id}`"
-              value="no"
-              class="accent-petal"
-            >
-            Regretfully declines
+          <!-- native input stays for keyboard/AT; checked state shows a floret -->
+          <label
+            v-for="option in [
+              { value: 'yes', label: 'Joyfully accepts' },
+              { value: 'no', label: 'Regretfully declines' },
+            ]"
+            :key="option.value"
+            class="flex cursor-pointer items-center gap-2 text-leaf-deep"
+          >
+            <span class="relative grid size-5 shrink-0 place-items-center">
+              <input
+                v-model="guest.attending"
+                type="radio"
+                :name="`attending-${guest.id}`"
+                :value="option.value"
+                class="peer sr-only"
+              >
+              <span
+                aria-hidden="true"
+                class="absolute inset-0 rounded-full border border-leaf/40 bg-white/70 transition-colors peer-checked:border-petal peer-focus-visible:ring-2 peer-focus-visible:ring-petal/60"
+              />
+              <svg
+                viewBox="-17 -17 34 34"
+                aria-hidden="true"
+                class="relative size-4 opacity-0 transition-opacity peer-checked:opacity-100"
+              >
+                <path
+                  v-for="angle in [0, 90, 180, 270]"
+                  :key="angle"
+                  d="M0,1.5 C-5.5,-1.5 -6.5,-11 0,-15.5 C6.5,-11 5.5,-1.5 0,1.5 Z"
+                  fill="var(--color-petal-mid)"
+                  :transform="`rotate(${angle})`"
+                />
+                <circle r="2.6" fill="var(--color-gold-soft)" />
+              </svg>
+            </span>
+            {{ option.label }}
           </label>
         </div>
         <template v-if="guest.attending === 'yes'">
@@ -224,18 +242,33 @@ const fieldClass = 'rounded-2xl border border-leaf/40 bg-white/70 px-4 py-3 text
             class="mt-3 block text-sm text-leaf-deep"
           >
             {{ course.name }}
-            <select
-              v-model="guest[courseField(course)]"
-              :name="`meal-${course.id}-${guest.id}`"
-              required
-              class="mt-1 w-full"
-              :class="fieldClass"
-            >
-              <option value="" disabled>Choose a {{ course.name.toLowerCase() }}</option>
-              <option v-for="option in mealsFor(course, guest)" :key="option.id" :value="option.id">
-                {{ option.name }}
-              </option>
-            </select>
+            <span class="relative mt-1 block">
+              <select
+                v-model="guest[courseField(course)]"
+                :name="`meal-${course.id}-${guest.id}`"
+                required
+                class="w-full appearance-none pr-10"
+                :class="fieldClass"
+              >
+                <option value="" disabled>Choose a {{ course.name.toLowerCase() }}</option>
+                <option v-for="option in mealsFor(course, guest)" :key="option.id" :value="option.id">
+                  {{ option.name }}
+                </option>
+              </select>
+              <!-- custom chevron, padded off the edge (appearance-none removes the stock one) -->
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+                class="pointer-events-none absolute right-4 top-1/2 size-4 -translate-y-1/2 text-leaf-deep"
+              >
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+            </span>
           </label>
           <textarea
             v-model="guest.dietaryNotes"

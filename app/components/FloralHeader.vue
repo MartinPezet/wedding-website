@@ -6,10 +6,21 @@
     class="pointer-events-none absolute inset-x-0 top-0 z-0"
   >
     <FloralCluster
-      class="absolute left-0 top-0 -translate-x-1/2 -translate-y-1/2 rotate-[135deg] w-56 sm:w-96 md:w-[50vw]"
+      class="absolute left-0 top-0 -translate-x-1/2 -translate-y-1/2 rotate-[135deg] w-56 sm:w-96"
+      :class="props.floralClasses"
     />
     <FloralCluster
-      class="absolute right-0 top-0 -translate-y-1/2 translate-x-1/2 -rotate-[135deg] w-56 sm:w-96 md:w-[50vw]"
+      class="absolute right-0 top-0 -translate-y-1/2 translate-x-1/2 -rotate-[135deg] w-56 sm:w-96"
+      :class="props.floralClasses"
     />
   </div>
 </template>
+
+<script setup>
+const props = defineProps({
+  floralClasses: {
+    type: String,
+    default: "",
+  },
+});
+</script>

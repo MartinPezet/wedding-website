@@ -25,11 +25,29 @@ describe('floral glyphs use hydrangea florets + tulip cups', () => {
     noDaisyRings(src)
   })
 
-  it('FloralCluster uses hydrangea florets and tulip cups', () => {
+  it('FloralCluster is hydrangea-only, mopheads on leafed stems', () => {
     const src = read('FloralCluster.vue')
     expect(src).toContain(FLORET)
-    expect(src).toContain(TULIP)
-    expect(src).toMatch(/var\(--color-tulip/)
+    // stems for the mopheads (mockup c-hstem), swaying with the blooms
+    expect(src, 'hstem stem path').toContain('Q-4,-46 -2,-92')
+    // tulips moved to the footer corner art
+    expect(src, 'no tulip cup path').not.toContain(TULIP)
+    expect(src, 'no tulip tokens').not.toMatch(/var\(--color-tulip/)
     noDaisyRings(src)
+  })
+
+  it('FloralDivider centres on a whole mophead, not a floret trio', () => {
+    const src = read('FloralDivider.vue')
+    // first floret of the 10-floret bloom cluster marks the mophead def
+    expect(src, 'bloom mophead def').toContain('translate(0,-28) rotate(10)')
+  })
+
+  it('FloralArch base ends anchor on mopheads', () => {
+    const src = read('FloralArch.vue')
+    // floret/mophead position swap at both arc base ends
+    expect(src).toMatch(/ref_\('flb'\)" transform="translate\(20,104\)/)
+    expect(src).toMatch(/ref_\('bloomX'\)" transform="translate\(1,140\)/)
+    expect(src).toMatch(/ref_\('fla'\)" transform="translate\(310,104\)/)
+    expect(src).toMatch(/ref_\('bloomX'\)" transform="translate\(329,140\)/)
   })
 })

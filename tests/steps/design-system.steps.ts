@@ -70,6 +70,73 @@ describeFeature(feature, (f) => {
     })
   })
 
+  f.Rule('Floral art with gentle motion', (r) => {
+    r.RuleScenario('Tulips live in the footer corners', (s) => {
+      let layout = ''
+      let cluster = ''
+      s.Given('the site footer and the floral cluster component', () => {
+        layout = readFileSync('app/layouts/default.vue', 'utf8')
+        cluster = readFileSync('app/components/FloralCluster.vue', 'utf8')
+      })
+      s.When('their markup is inspected', () => {})
+      s.Then('tulip corner art renders in the footer and no tulip glyphs remain in the cluster', () => {
+        expect(layout, 'footer places tulip corner art').toContain('FloralTulipCorner')
+        // tulip cup path signature must be gone from the cluster
+        expect(cluster, 'cluster is hydrangea-only').not.toContain('-12,-26 0,-34')
+      })
+    })
+  })
+
+  f.Rule('Themed form controls', (r) => {
+    const rsvp = () => readFileSync('app/pages/rsvp.vue', 'utf8')
+
+    r.RuleScenario('Radio selected state is a floret', (s) => {
+      let src = ''
+      s.Given('the RSVP attendance radios', () => {
+        src = rsvp()
+      })
+      s.When('their markup is inspected', () => {})
+      s.Then('the selected state renders a hydrangea floret glyph instead of a browser-default solid dot', () => {
+        // native input stays in the tree (a11y) but is visually replaced
+        expect(src, 'no stock accent-color radios').not.toContain('accent-petal')
+        expect(src, 'hidden native input').toMatch(/type="radio"[\s\S]{0,200}?class="peer sr-only"/)
+        // the floret petal path drawn for the checked state
+        expect(src, 'floret glyph').toContain('-6.5,-11 0,-15.5')
+        expect(src, 'checked state reveals the floret').toContain('peer-checked:')
+      })
+    })
+
+    r.RuleScenario('Dropdowns are themed', (s) => {
+      let src = ''
+      s.Given('the RSVP meal choice dropdowns', () => {
+        src = rsvp()
+      })
+      s.When('their markup is inspected', () => {})
+      s.Then('the control has rounded borders, a chevron padded from the edge, and theme-colour hover and focus states', () => {
+        expect(src, 'custom chevron replaces the stock arrow').toContain('appearance-none')
+        expect(src, 'chevron padded from the edge').toContain('pr-10')
+        expect(src, 'rounded control').toContain('rounded-2xl')
+        expect(src, 'themed hover state').toContain('hover:border-petal')
+        expect(src, 'themed focus state').toContain('focus:border-petal')
+      })
+    })
+  })
+
+  f.Rule('Favicon derives from the floral glyphs', (r) => {
+    r.RuleScenario('Favicon is a hydrangea', (s) => {
+      let svg = ''
+      s.Given('the generated favicon.svg', () => {
+        svg = readFileSync('public/favicon.svg', 'utf8')
+      })
+      s.When('its contents are read', () => {})
+      s.Then('it renders a hydrangea mophead using theme palette colours', () => {
+        // floret petal path (mophead shape language), not the old daisy petal
+        expect(svg).toContain('-6.5,-11 0,-15.5')
+        expect(svg).not.toContain('-15,-27 0,-38')
+      })
+    })
+  })
+
   f.Rule('Hero floral arch', (r) => {
     r.RuleScenario('Arch crowns the home and gifts heroes', (s) => {
       const html: Record<string, string> = {}

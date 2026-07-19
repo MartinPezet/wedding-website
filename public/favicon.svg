@@ -1,20 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-42 -42 84 84">
-  <!-- a-bloom from the design system; generated from main.css @theme by scripts/generate-favicons.mjs -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-46 -46 92 92">
+  <!-- hydrangea mophead from the design system; generated from main.css @theme by scripts/generate-favicons.mjs -->
   <defs>
-    <path id="pt" d="M0,3 C-13,-4 -15,-27 0,-38 C15,-27 13,-4 0,3 Z"/>
-    <g id="ring">
-      <use href="#pt"/>
-      <use href="#pt" transform="rotate(45)"/>
-      <use href="#pt" transform="rotate(90)"/>
-      <use href="#pt" transform="rotate(135)"/>
-      <use href="#pt" transform="rotate(180)"/>
-      <use href="#pt" transform="rotate(225)"/>
-      <use href="#pt" transform="rotate(270)"/>
-      <use href="#pt" transform="rotate(315)"/>
-    </g>
+    <path id="fp" d="M0,1.5 C-5.5,-1.5 -6.5,-11 0,-15.5 C6.5,-11 5.5,-1.5 0,1.5 Z"/>
+    <g id="fla"><use href="#fp" transform="rotate(0)" fill="#a9bce4"/><use href="#fp" transform="rotate(90)" fill="#a9bce4"/><use href="#fp" transform="rotate(180)" fill="#a9bce4"/><use href="#fp" transform="rotate(270)" fill="#a9bce4"/><circle r="2.6" fill="#e7d9a8"/></g>
+    <g id="flb"><use href="#fp" transform="rotate(0)" fill="#7e97d0"/><use href="#fp" transform="rotate(90)" fill="#7e97d0"/><use href="#fp" transform="rotate(180)" fill="#7e97d0"/><use href="#fp" transform="rotate(270)" fill="#7e97d0"/><circle r="2.6" fill="#e7d9a8"/></g>
+    <g id="flc"><use href="#fp" transform="rotate(0)" fill="#5570b4"/><use href="#fp" transform="rotate(90)" fill="#5570b4"/><use href="#fp" transform="rotate(180)" fill="#5570b4"/><use href="#fp" transform="rotate(270)" fill="#5570b4"/><circle r="2.6" fill="#e7d9a8"/></g>
   </defs>
-  <use href="#ring" fill="#a9bce4"/>
-  <use href="#ring" transform="rotate(22.5) scale(0.64)" fill="#5570b4"/>
-  <use href="#ring" transform="scale(0.34)" fill="#7e97d0"/>
-  <circle r="5" fill="#4c66ac"/>
+  <use href="#flb" transform="translate(0,-28) rotate(10)"/>
+  <use href="#fla" transform="translate(24,-16) rotate(40) scale(0.92)"/>
+  <use href="#flc" transform="translate(29,8) rotate(-20) scale(0.85)"/>
+  <use href="#fla" transform="translate(12,27) rotate(25) scale(0.95)"/>
+  <use href="#flb" transform="translate(-13,28) rotate(-35) scale(0.9)"/>
+  <use href="#flc" transform="translate(-28,9) rotate(15) scale(0.88)"/>
+  <use href="#fla" transform="translate(-25,-17) rotate(-42) scale(0.94)"/>
+  <use href="#flc" transform="translate(-9,-8) rotate(30) scale(0.8)"/>
+  <use href="#flb" transform="translate(11,-4) rotate(-15) scale(1.05)"/>
+  <use href="#fla" transform="translate(0,12) rotate(55) scale(0.75)"/>
 </svg>
