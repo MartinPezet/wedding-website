@@ -1,0 +1,33 @@
+name: Nightly backup
+
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_REGION: eu-west-2
+    steps:
+      - name: Fetch dump
+        run: |
+          FILE="wedding-backup-$(date -u +%F).json"
+          echo "FILE=$FILE" >> "$GITHUB_ENV"
+          curl --fail --silent --show-error \
+            -H "Authorization: Bearer ${{ secrets.BACKUP_SECRET }}" \
+            "${{ secrets.SITE_URL }}/api/admin/backup" -o "$FILE"
+          # a 200 that isn't the JSON dump must fail the run, not get archived
+          node -e "JSON.parse(require('fs').readFileSync(process.env.FILE, 'utf8'))"
+
+      - name: Upload to S3
+        run: aws s3 cp "$FILE" "s3://cm-wedding-website-backups/$(date -u +%Y/%m)/$FILE"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: db-backup
+          path: ${{ env.FILE }}
+          retention-days: 90
