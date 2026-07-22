@@ -13,6 +13,11 @@ resource "aws_amplify_app" "site" {
             - npm ci
         build:
           commands:
+            # Amplify only injects environment_variables into the build
+            # phase; SSR compute doesn't inherit them at request time. Bake
+            # the NUXT_* runtime secrets into .env.production so Nitro picks
+            # them up when the compute function boots.
+            - env | grep -E '^NUXT_' >> .env.production
             - npm run build
       artifacts:
         baseDirectory: .amplify-hosting

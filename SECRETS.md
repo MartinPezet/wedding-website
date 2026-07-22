@@ -32,6 +32,13 @@ holds the same values only for the one-time bootstrap apply.
 Managed by Terraform (`infra/amplify.tf`) from `infra/terraform.tfvars` —
 never set them in the Amplify console; apply would fight you.
 
+Amplify only injects `environment_variables` into the *build* phase — SSR
+compute doesn't inherit them at request time. The build spec greps `NUXT_*`
+out of the build env into `.env.production` so Nitro picks them up when the
+compute function boots. Any new `NUXT_*` runtime var added to the
+`environment_variables` map is covered automatically; a non-`NUXT_`-prefixed
+one would need its own line in the `build_spec` grep.
+
 | Variable | Purpose | tfvars key |
 |---|---|---|
 | `NUXT_SITE_PASSWORD` | Guest gate password | `nuxt_site_password` |
