@@ -40,7 +40,7 @@ never set them in the Amplify console; apply would fight you.
 | `NUXT_BACKUP_SECRET` | Accepts the backup bearer token | `nuxt_backup_secret` |
 | `NUXT_DB_URL` | Turso libSQL URL | `turso_database_url` |
 | `NUXT_DB_AUTH_TOKEN` | Turso auth token | `turso_auth_token` |
-| `AWS_AMPLIFY` | Selects the Nitro `aws-amplify` preset at build | (constant `1`) |
+| `AMPLIFY_BUILD` | Selects the Nitro `aws-amplify` preset at build | (constant `1`) |
 
 `infra/terraform.tfvars` is gitignored; it also holds `github_repository` and
 `github_access_token` (GitHub PAT, `repo` + `admin:repo_hook`, used once by

@@ -25,7 +25,7 @@ resource "aws_amplify_app" "site" {
 
   environment_variables = {
     # selects the nitro aws-amplify preset in nuxt.config.ts
-    AWS_AMPLIFY           = "1"
+    AMPLIFY_BUILD          = "1"
     NUXT_SITE_PASSWORD    = var.nuxt_site_password
     NUXT_ADMIN_PASSWORD   = var.nuxt_admin_password
     NUXT_SESSION_PASSWORD = var.nuxt_session_password

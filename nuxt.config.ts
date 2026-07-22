@@ -35,7 +35,7 @@ export default defineNuxtConfig({
   compatibilityDate: '2026-07-10',
   nitro: {
     // ponytail: amplify preset only for real builds; dev stays node
-    preset: process.env.AWS_AMPLIFY ? 'aws-amplify' : undefined,
+    preset: process.env.AMPLIFY_BUILD ? 'aws-amplify' : undefined,
   },
   vite: {
     plugins: [tailwindcss()],
