@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { qrSvg } from '~~/shared/utils/qr'
+import { qrSvg } from '#shared/utils/qr'
 
 definePageMeta({ layout: 'print' })
 useSeoMeta({ title: 'RSVP letters — Wedding HQ', robots: 'noindex' })

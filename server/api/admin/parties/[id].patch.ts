@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm'
-import { normalisePhone } from '../../../../shared/utils/phone'
+import { normalisePhone } from '#shared/utils/phone'
 import { guests, parties } from '../../../db/schema'
 
 interface GuestEdit {

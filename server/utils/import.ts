@@ -1,5 +1,5 @@
 import Papa from 'papaparse'
-import { normalisePhone } from '../../shared/utils/phone'
+import { normalisePhone } from '#shared/utils/phone'
 import { createParty } from './parties'
 import type { Db } from './db'
 import { getPartyList } from './admin'

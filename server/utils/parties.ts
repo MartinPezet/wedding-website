@@ -1,4 +1,4 @@
-import { normalisePhone } from '../../shared/utils/phone'
+import { normalisePhone } from '#shared/utils/phone'
 import { guests, parties } from '../db/schema'
 import type { Db } from './db'
 import { generatePartyToken } from './token'

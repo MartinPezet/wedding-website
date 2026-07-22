@@ -1,8 +1,8 @@
 import { eq } from 'drizzle-orm'
 import { menu as contentMenu } from '#shared/content'
 import type { Menu } from '#shared/content'
-import { COURSE_FIELDS, optionsFor } from '../../shared/utils/menu'
-import { normalisePhone } from '../../shared/utils/phone'
+import { COURSE_FIELDS, optionsFor } from '#shared/utils/menu'
+import { normalisePhone } from '#shared/utils/phone'
 import { guests, parties, settings } from '../db/schema'
 import type { Db } from './db'
 
