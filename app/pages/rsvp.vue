@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { menu } from '~~/shared/content'
-import type { MenuCourse } from '~~/shared/content'
+import { menu } from '#shared/content'
+import type { MenuCourse } from '#shared/content'
 
 interface GuestForm {
   id: number

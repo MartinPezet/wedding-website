@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { schedule } from "~~/shared/content";
+import { schedule } from "#shared/content";
 
 // mockup 1a shows "1:30pm"-style times
 const time = (iso: string) =>

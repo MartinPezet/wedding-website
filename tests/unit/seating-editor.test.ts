@@ -1,7 +1,7 @@
 // @vitest-environment nuxt
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import { describe, expect, it } from 'vitest'
-import { menu } from '../../shared/content'
+import { menu } from '#shared/content'
 
 // variable paths so missing modules fail tests, not collection
 const composable = async () => await import(`../../app/composables/${'useSeatingEditor'}.ts`)

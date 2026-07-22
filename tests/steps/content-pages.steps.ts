@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs'
 import { mountSuspended } from '@nuxt/test-utils/runtime'
 import { describeFeature, loadFeature, setVitestCucumberConfiguration } from '@amiceli/vitest-cucumber'
 import { expect } from 'vitest'
-import { faq, gifts, schedule, travel } from '../../shared/content'
+import { faq, gifts, schedule, travel } from '#shared/content'
 
 // dynamic imports so each missing page fails only its own scenario
 const page = async (name: string) =>

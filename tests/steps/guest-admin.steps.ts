@@ -4,7 +4,7 @@ import { describeFeature, loadFeature, setVitestCucumberConfiguration } from '@a
 import { expect, vi } from 'vitest'
 import { readBody } from 'h3'
 import { clearNuxtData } from '#imports'
-import { menu } from '../../shared/content'
+import { menu } from '#shared/content'
 
 setVitestCucumberConfiguration({ excludeTags: ['manual'] })
 

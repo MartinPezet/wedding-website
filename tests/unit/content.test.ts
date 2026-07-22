@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { faq, gifts, schedule, travel } from '../../shared/content'
+import { faq, gifts, schedule, travel } from '#shared/content'
 
 describe('schedule.json', () => {
   it('has at least one event with name, times, location, and maps link', () => {

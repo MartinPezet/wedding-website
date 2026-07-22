@@ -1,4 +1,4 @@
-import type { ScheduleEvent } from '../../shared/content'
+import type { ScheduleEvent } from '#shared/content'
 
 // RFC 5545 text escaping: backslash, semicolon, comma, newline
 const esc = (text: string) =>

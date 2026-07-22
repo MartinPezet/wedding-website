@@ -1,5 +1,5 @@
 import { asc, eq } from 'drizzle-orm'
-import { menu } from '../../shared/content'
+import { menu } from '#shared/content'
 import { COURSE_FIELDS } from '../../shared/utils/menu'
 import { guests, parties, settings } from '../db/schema'
 import type { Db } from './db'

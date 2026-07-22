@@ -173,7 +173,7 @@ describeFeature(feature, (f) => {
       let wrapper: Awaited<ReturnType<typeof mountSuspended>>
       let handout: { sections: { title: string, items: string[] }[] }
       s.Given('edited handout.json content', async () => {
-        handout = (await import('../../shared/content')).handout
+        handout = (await import('#shared/content')).handout
         expect(handout.sections.length).toBeGreaterThan(0)
       })
       s.When('the site is rebuilt', async () => {
