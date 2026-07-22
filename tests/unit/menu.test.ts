@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { menu } from '#shared/content'
-import { COURSE_FIELDS } from '../../shared/utils/menu'
+import { COURSE_FIELDS } from '#shared/utils/menu'
 
 const optionShape = (option: unknown) => {
   expect(option).toMatchObject({ id: expect.any(String), name: expect.any(String) })

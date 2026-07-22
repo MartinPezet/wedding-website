@@ -1,4 +1,4 @@
-import { normalisePhone } from '../../../shared/utils/phone'
+import { normalisePhone } from '#shared/utils/phone'
 import type { NewParty } from '../../utils/parties'
 import { createParty } from '../../utils/parties'
 

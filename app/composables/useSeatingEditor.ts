@@ -1,7 +1,7 @@
 import { computed, ref } from 'vue'
 import type { SeatingData, SeatingGuest, SeatingPatch, SeatingTable, TableInput } from '../../server/utils/seating'
-import type { TableShape } from '../../shared/utils/seating'
-import { CANVAS } from '../../shared/utils/seating'
+import type { TableShape } from '#shared/utils/seating'
+import { CANVAS } from '#shared/utils/seating'
 
 export type { SeatingGuest, SeatingTable }
 

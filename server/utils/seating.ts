@@ -1,6 +1,6 @@
 import { asc, eq, inArray, isNotNull, or } from 'drizzle-orm'
 import { createError } from 'h3'
-import type { TableShape } from '../../shared/utils/seating'
+import type { TableShape } from '#shared/utils/seating'
 import { guests, parties, tables } from '../db/schema'
 import type { Db } from './db'
 
