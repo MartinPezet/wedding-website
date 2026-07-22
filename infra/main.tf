@@ -11,7 +11,7 @@ terraform {
   # State bucket is the one resource not managed here (chicken-and-egg);
   # creation is a documented one-time step in README.md.
   backend "s3" {
-    bucket       = "cm-wedding-website-tfstate"
+    bucket       = "cm-wedding-website-tf-state"
     key          = "terraform.tfstate"
     region       = "eu-west-2"
     use_lockfile = true

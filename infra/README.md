@@ -12,11 +12,11 @@ Run with your own admin AWS credentials:
 ```sh
 # 1. State bucket (name must match backend config in main.tf)
 aws s3api create-bucket \
-  --bucket cm-wedding-website-tfstate \
+  --bucket cm-wedding-website-tf-state \
   --region eu-west-2 \
   --create-bucket-configuration LocationConstraint=eu-west-2
 aws s3api put-bucket-versioning \
-  --bucket cm-wedding-website-tfstate \
+  --bucket cm-wedding-website-tf-state \
   --versioning-configuration Status=Enabled
 
 # 2. Provision everything
