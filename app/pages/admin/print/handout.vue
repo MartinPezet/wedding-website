@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { handout } from '~~/shared/content'
+import { handout } from '#shared/content'
 
 definePageMeta({ layout: 'print' })
 useSeoMeta({ title: 'Day handout — Wedding HQ', robots: 'noindex' })

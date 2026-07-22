@@ -1,5 +1,5 @@
 import ExcelJS from 'exceljs'
-import { menu } from '../../shared/content'
+import { menu } from '#shared/content'
 import { COURSE_FIELDS } from '../../shared/utils/menu'
 import type { Db } from './db'
 import { getPartyList } from './admin'

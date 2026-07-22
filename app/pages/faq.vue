@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { faq } from "~~/shared/content";
+import { faq } from "#shared/content";
 
 useSeoMeta({
   title: "FAQ — Ciera & Martin",

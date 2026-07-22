@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { travel } from "~~/shared/content";
+import { travel } from "#shared/content";
 
 useSeoMeta({
   title: "Travel & Stay — Ciera & Martin",

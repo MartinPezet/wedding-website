@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { gifts } from "~~/shared/content";
+import { gifts } from "#shared/content";
 
 useSeoMeta({
   title: "Gifts — Ciera & Martin",

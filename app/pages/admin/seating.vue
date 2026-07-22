@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { menu } from '../../../shared/content'
+import { menu } from '#shared/content'
 import type { TableShape } from '../../../shared/utils/seating'
 import { CANVAS, ROUND_TABLE_RADIUS, SEAT_RADIUS, rectSize, seatPositions } from '../../../shared/utils/seating'
 

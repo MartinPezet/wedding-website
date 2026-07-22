@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { schedule } from "~~/shared/content";
+import { schedule } from "#shared/content";
 
 // footer date per mockup 1a: "17 · 01 · 2027"
 const weddingDate = new Date(schedule[0]!.start);

@@ -4,7 +4,7 @@ import { describeFeature, loadFeature, setVitestCucumberConfiguration } from '@a
 import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import ExcelJS from 'exceljs'
 import { expect, vi } from 'vitest'
-import { menu } from '../../shared/content'
+import { menu } from '#shared/content'
 
 setVitestCucumberConfiguration({ excludeTags: ['manual'] })
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { menu } from '~~/shared/content'
+import { menu } from '#shared/content'
 
 definePageMeta({ layout: 'print' })
 useSeoMeta({ title: 'Place cards — Wedding HQ', robots: 'noindex' })

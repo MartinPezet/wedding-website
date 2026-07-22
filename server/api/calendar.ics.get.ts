@@ -1,4 +1,4 @@
-import { schedule } from '../../shared/content'
+import { schedule } from '#shared/content'
 import { buildIcs } from '../utils/ics'
 
 export default defineEventHandler((event) => {

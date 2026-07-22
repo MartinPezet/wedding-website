@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { schedule } from "~~/shared/content";
+import { schedule } from "#shared/content";
 
 // public save-the-date: no session, no site chrome — layout: false skips the
 // nav header entirely; minimal footer is inlined below
