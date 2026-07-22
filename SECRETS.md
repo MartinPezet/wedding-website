@@ -33,11 +33,14 @@ Managed by Terraform (`infra/amplify.tf`) from `infra/terraform.tfvars` —
 never set them in the Amplify console; apply would fight you.
 
 Amplify only injects `environment_variables` into the *build* phase — SSR
-compute doesn't inherit them at request time. The build spec greps `NUXT_*`
-out of the build env into `.env.production` so Nitro picks them up when the
-compute function boots. Any new `NUXT_*` runtime var added to the
-`environment_variables` map is covered automatically; a non-`NUXT_`-prefixed
-one would need its own line in the `build_spec` grep.
+compute doesn't read them from `process.env` at request time, and unlike
+Next.js, Nitro has no built-in dotenv loader to pick up a shipped `.env`
+file either. So `nuxt.config.ts` reads `process.env.NUXT_*` explicitly at
+build time and bakes the values into `runtimeConfig` — the build phase has
+the vars, so the shipped config carries the real values with no runtime env
+dependency. Any new secret needs the same explicit `process.env.NUXT_*`
+read added to `runtimeConfig` in `nuxt.config.ts`, not just a new entry in
+the `environment_variables` map.
 
 | Variable | Purpose | tfvars key |
 |---|---|---|

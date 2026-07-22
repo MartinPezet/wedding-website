@@ -22,15 +22,19 @@ export default defineNuxtConfig({
   },
   css: ['~/assets/css/main.css', '~/assets/css/print.css'],
   runtimeConfig: {
-    // set via NUXT_SITE_PASSWORD
-    sitePassword: '',
-    // set via NUXT_ADMIN_PASSWORD
-    adminPassword: '',
-    // set via NUXT_BACKUP_SECRET — bearer auth for the nightly backup fetch
-    backupSecret: '',
-    // set via NUXT_DB_URL / NUXT_DB_AUTH_TOKEN; defaults to local file
-    dbUrl: '',
-    dbAuthToken: '',
+    // Amplify SSR compute doesn't inject console/app env vars into the
+    // running process — only the build phase sees them. Read explicitly
+    // here so the value is baked into the shipped config at build time.
+    sitePassword: process.env.NUXT_SITE_PASSWORD ?? '',
+    adminPassword: process.env.NUXT_ADMIN_PASSWORD ?? '',
+    // bearer auth for the nightly backup fetch
+    backupSecret: process.env.NUXT_BACKUP_SECRET ?? '',
+    // defaults to local file when unset
+    dbUrl: process.env.NUXT_DB_URL ?? '',
+    dbAuthToken: process.env.NUXT_DB_AUTH_TOKEN ?? '',
+    session: {
+      password: process.env.NUXT_SESSION_PASSWORD ?? '',
+    },
   },
   compatibilityDate: '2026-07-10',
   nitro: {
