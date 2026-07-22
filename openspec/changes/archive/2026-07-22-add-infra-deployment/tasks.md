@@ -4,7 +4,7 @@
 - [x] 1.2 Bootstrap remote state (S3 backend + locking); `infra/` skeleton with providers and variables
 - [x] 1.3 `aws_amplify_app` + branch resource: GitHub connection, build spec with Nitro aws-amplify preset, env var wiring
 - [x] 1.4 Backup bucket: private, versioned; IAM user/role for CI uploads
-- [ ] 1.5 Hello-world deploy: verify Nuxt 4 + aws-amplify preset serves SSR routes on Amplify (manual drill for infra-terraform scenarios)
+- [x] 1.5 Hello-world deploy: verify Nuxt 4 + aws-amplify preset serves SSR routes on Amplify (manual drill for infra-terraform scenarios)
 - [x] 1.6 Quality pass: test, lint, typecheck, terraform validate green
 
 ## 2. Turso & Secrets
@@ -13,7 +13,7 @@
 - [x] 2.2 setup-turso script: create DB, emit URL + auth token
 - [x] 2.3 Wire secrets: GitHub Actions (AWS creds, Turso, backup secret) and Amplify env vars (runtime config)
 - [x] 2.4 SECRETS.md: every variable, purpose, location, rotation
-- [ ] 2.5 Quality pass: test, lint, typecheck green; fresh-setup docs walkthrough (manual drill)
+- [x] 2.5 Quality pass: test, lint, typecheck green; fresh-setup docs walkthrough (manual drill)
 
 ## 3. Workflows
 
@@ -21,4 +21,4 @@
 - [x] 3.2 deploy.yml: terraform apply → drizzle migrate against Turso → Amplify build; migration failure halts
 - [x] 3.3 pr.yml: lint, typecheck, terraform plan, migration dry-run
 - [x] 3.4 backup.yml: nightly cron → curl backup endpoint (bearer secret) → dated S3 upload + artifact
-- [ ] 3.5 Quality pass: test, lint, typecheck green; manual drills for ci-cd @manual scenarios (end-to-end deploy with migration, restore drill against scratch DB, forced backup failure visible)
+- [x] 3.5 Quality pass: test, lint, typecheck green; manual drills for ci-cd @manual scenarios (end-to-end deploy with migration, restore drill against scratch DB, forced backup failure visible)
