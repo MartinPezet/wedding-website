@@ -20,11 +20,11 @@ The system SHALL persist parties (invite units) and their guests. Each party SHA
 - **THEN** each existing choice is preserved as that guest's main-course choice
 
 ### Requirement: Secure party tokens
-Each party token SHALL be generated from 32 cryptographically random bytes and be unique. Tokens SHALL be usable in URLs.
+Each party token SHALL be 10 characters drawn from the Crockford base32 alphabet (`0-9`, `A-Z` excluding `I`, `L`, `O`, `U`) and be unique. Tokens SHALL be usable in URLs and short/unambiguous enough for a guest to transcribe by hand from a printed letter.
 
 #### Scenario: Token generation
 - **WHEN** a party is created
-- **THEN** it receives a unique URL-safe token derived from 32 random bytes
+- **THEN** it receives a unique 10-character token drawn from the Crockford base32 alphabet
 
 ### Requirement: Settings storage
 The system SHALL store the wedding date and RSVP deadline as editable settings in the database (not hard-coded configuration).

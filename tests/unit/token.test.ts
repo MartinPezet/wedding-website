@@ -3,10 +3,9 @@ import { describe, expect, it } from 'vitest'
 import { generatePartyToken } from '../../server/utils/token'
 
 describe('generatePartyToken', () => {
-  it('produces URL-safe tokens from 32 random bytes', () => {
+  it('produces 10-character Crockford base32 tokens, hand-transcribable and unambiguous', () => {
     const token = generatePartyToken()
-    expect(token).toMatch(/^[A-Za-z0-9_-]{43}$/)
-    expect(Buffer.from(token, 'base64url')).toHaveLength(32)
+    expect(token).toMatch(/^[0-9A-HJKMNP-TV-Z]{10}$/)
   })
 
   it('never repeats', () => {

@@ -72,6 +72,24 @@ describeFeature(feature, (f) => {
   })
 
   f.Rule('RSVP letters with personal QR codes', (r) => {
+    r.RuleScenario('QR code matches letter styling', (s) => {
+      let svg = ''
+      s.Given('an invite letter for a party', () => {})
+      s.When('its QR code markup is generated', async () => {
+        const { qrSvg } = await import('#shared/utils/qr')
+        svg = await qrSvg('https://example.test/?t=abc123')
+      })
+      s.Then('the background is transparent, the dark modules use the petal-deep colour, the data modules are rounded, and the three finder-pattern squares stay sharp-cornered', () => {
+        // no legacy opaque background rect (old renderer's full-canvas path)
+        expect(svg).not.toMatch(/H\d+(?:\.\d+)?z/)
+        expect(svg).toContain('#4c66ac')
+        const finderGroup = svg.match(/<g data-qr-finder[^>]*>[\s\S]*?<\/g>/)?.[0] ?? ''
+        const dataGroup = svg.match(/<g data-qr-data[^>]*>[\s\S]*?<\/g>/)?.[0] ?? ''
+        expect(finderGroup).not.toContain('rx=')
+        expect(dataGroup).toMatch(/rx="0\.\d+"/)
+      })
+    })
+
     r.RuleScenario('Batch letter printing', (s) => {
       const parties = [
         { id: 1, name: 'The Smiths', token: 'tok-smith-abc' },
@@ -212,6 +230,22 @@ describeFeature(feature, (f) => {
       s.When('its markup is inspected', () => {})
       s.Then('the tulip corner art is placed on the handout page', () => {
         expect(src).toContain('FloralTulipCorner')
+      })
+    })
+  })
+
+  f.Rule('Bottom divider on invite letters', (r) => {
+    // source-level, same convention as the tulip corner art check above
+    r.RuleScenario('Letter shows a closing divider', (s) => {
+      let src = ''
+      s.Given('the RSVP letters print page', () => {
+        src = readFileSync('app/pages/admin/print/letters.vue', 'utf8')
+      })
+      s.When('its markup is inspected', () => {})
+      s.Then('a centered divider appears at the bottom of each letter, below the QR/URL content', () => {
+        // divider lives in the bleed layer alongside the bottom-anchored tulip corners
+        const bleed = src.match(/<template #bleed>[\s\S]*?<\/template>/)?.[0] ?? ''
+        expect(bleed).toMatch(/<FloralDivider[^>]*class="[^"]*\babsolute\b[^"]*\bbottom-/)
       })
     })
   })

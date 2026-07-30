@@ -7,7 +7,8 @@ export default defineEventHandler(async (event) => {
   const token = getQuery(event).t
   if (typeof token !== 'string' || !token) return
 
-  const party = await useDb().query.parties.findFirst({ where: eq(parties.token, token) })
+  // tokens are stored uppercase (Crockford base32); match regardless of how the guest typed it
+  const party = await useDb().query.parties.findFirst({ where: eq(parties.token, token.toUpperCase()) })
   if (party) {
     await setUserSession(event, { user: { guest: true }, partyId: party.id })
     return

@@ -146,10 +146,8 @@ describeFeature(feature, (f) => {
       s.When('it is created', async () => {
         token = (await makeParty(db, 'The Does', [{ name: 'Dana Doe' }])).token
       })
-      s.Then('it receives a unique URL-safe token derived from 32 cryptographically random bytes', async () => {
-        // 32 bytes base64url-encoded = 43 chars, URL-safe alphabet
-        expect(token).toMatch(/^[A-Za-z0-9_-]{43}$/)
-        expect(Buffer.from(token, 'base64url')).toHaveLength(32)
+      s.Then('it receives a unique 10-character token drawn from the Crockford base32 alphabet', async () => {
+        expect(token).toMatch(/^[0-9A-HJKMNP-TV-Z]{10}$/)
         const other = (await makeParty(db, 'The Others', [{ name: 'Erin Other' }])).token
         expect(other).not.toBe(token)
       })
