@@ -21,7 +21,7 @@ All print routes SHALL require an admin session — invite letters contain party
 - **THEN** access is denied
 
 ### Requirement: RSVP letters with personal QR codes
-The system SHALL render an A5 RSVP letter per party: party name(s), invite copy, floral styling, a scannable QR code encoding that party's personal RSVP URL, and a short fallback URL. A batch view SHALL render all parties sequentially for one print-to-PDF action; single parties SHALL be reprintable individually.
+The system SHALL render an A5 RSVP letter per party: party name(s), invite copy, floral styling, a scannable QR code encoding that party's personal RSVP URL, and a short fallback URL. A batch view SHALL render all parties sequentially for one print-to-PDF action; single parties SHALL be reprintable individually. The QR code SHALL use a transparent background and render its dark modules in the site's `--color-petal-deep` accent colour instead of plain black; data modules SHALL have rounded corners while the three finder-pattern (position marker) squares remain sharp-cornered.
 
 #### Scenario: Batch letter printing
 - **WHEN** the admin prints the letters batch view
@@ -30,6 +30,17 @@ The system SHALL render an A5 RSVP letter per party: party name(s), invite copy,
 #### Scenario: QR scan identifies party
 - **WHEN** a printed letter's QR code is scanned with a phone
 - **THEN** the phone opens the site with that party's token, bypassing the password and identifying the party
+
+#### Scenario: QR code matches letter styling
+- **WHEN** an invite letter renders its QR code
+- **THEN** the QR background is transparent, the dark modules render in the `--color-petal-deep` colour, the data modules have rounded corners, and the three finder-pattern squares remain sharp-cornered
+
+### Requirement: Bottom divider on invite letters
+Each printed RSVP invite letter SHALL show a centered floral divider at the bottom of the page, below the QR/fallback-URL block and above the existing tulip corner art.
+
+#### Scenario: Letter shows a closing divider
+- **WHEN** an invite letter renders
+- **THEN** a centered divider appears at the bottom of the page, between the QR/URL content and the page's bottom edge
 
 ### Requirement: Large-format seating chart print
 The system SHALL render the persisted seating assignments as a large-format (A2, optionally A1) printable chart in site style, listing each table with the guests seated at it.
@@ -62,3 +73,40 @@ The RSVP letter and day handout print pages SHALL carry the same tulip corner ar
 #### Scenario: Handout carries tulip corners
 - **WHEN** the day handout print page renders
 - **THEN** the handout page shows the tulip corner art
+
+### Requirement: Decorative back page on RSVP invite letters
+Each printed RSVP invite letter SHALL be followed by a decorative A5 back page carrying no
+party data and no body copy. The back SHALL show exactly three elements: a full-bleed floral
+band around the sheet perimeter that leaves the centre clear, a double inset hairline border
+rectangle, and a centred `C & M` monogram with a floral divider directly beneath it. The back
+SHALL be identical for every party.
+
+#### Scenario: Every letter is followed by a back page
+- **WHEN** the letters batch view renders for multiple parties
+- **THEN** each party's letter is immediately followed by an A5 back page, giving twice as many print pages as parties
+
+#### Scenario: Back page carries no party data
+- **WHEN** a letter back page renders
+- **THEN** it contains no party name, no QR code, and no RSVP URL
+
+#### Scenario: Back page shows monogram, divider, and inset border
+- **WHEN** a letter back page renders
+- **THEN** it shows the `C & M` monogram, a floral divider below the monogram, and an inset hairline border rectangle set in from the sheet edges
+
+#### Scenario: Single-party reprint includes its back
+- **WHEN** the letters view is opened for a single party via the `party` query parameter
+- **THEN** that party's letter and one back page are rendered
+
+### Requirement: Letter back floral art follows the arch construction
+The letter back's floral art SHALL be built with the same SVG technique as the floral arch:
+`<defs>` primitives (petals, leaves, blooms, sprigs) instanced with `<use>`, ids scoped per
+component instance, and every fill drawn from the theme colour tokens rather than literal
+colours. Its reveal animation SHALL be suppressed under `prefers-reduced-motion: reduce`.
+
+#### Scenario: Art uses theme tokens and scoped ids
+- **WHEN** the letter back component renders
+- **THEN** its floral fills reference theme colour tokens, its `<defs>` ids are unique to the component instance, and the art is instanced via `<use>` references
+
+#### Scenario: Reduced motion suppresses the reveal
+- **WHEN** the letter back renders under a reduced-motion preference
+- **THEN** the floral reveal animation does not play and the art renders in its final state

@@ -181,5 +181,25 @@ describeFeature(feature, (f) => {
         expect(welcome).not.toMatch(/invalid token/i)
       })
     })
+
+    r.RuleScenario('Token matches regardless of letter case', (s) => {
+      let token = ''
+      let partyId = 0
+      const event: FakeEvent = { path: '/' }
+      s.Given('a valid party token', async () => {
+        const db = await withDb()
+        const { createParty } = await import('../../server/utils/parties')
+        const party = await createParty(db, { name: 'The Casers', guests: [{ name: 'Cass Case' }] })
+        token = party.token
+        partyId = party.id
+      })
+      s.When('a visitor opens a site URL carrying that token with different letter casing', async () => {
+        event.query = { t: token.toLowerCase() }
+        await (await tokenGate())(event)
+      })
+      s.Then('a session is granted and the party is identified exactly as if the casing matched', () => {
+        expect(event.session).toMatchObject({ user: { guest: true }, partyId })
+      })
+    })
   })
 })
