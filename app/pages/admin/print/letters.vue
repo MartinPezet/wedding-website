@@ -54,7 +54,8 @@ const venueLine = "Huntsham Court, Devon";
 
 <template>
   <div>
-    <PrintPage v-for="entry in letters" :key="entry.party.id" size="a5">
+    <template v-for="entry in letters" :key="entry.party.id">
+      <PrintPage size="a5">
       <template #bleed>
         <FloralHeader />
         <FloralTulipCorner class="absolute bottom-0 left-0 w-24" />
@@ -101,7 +102,9 @@ const venueLine = "Huntsham Court, Devon";
           </div>
         </div>
       </article>
-    </PrintPage>
+      </PrintPage>
+      <PrintLetterBack />
+    </template>
     <p v-if="!letters.length" class="no-print p-8 text-center text-ink/60">
       No parties to print yet.
     </p>

@@ -2,7 +2,7 @@
 import { readFileSync } from 'node:fs'
 import { mockNuxtImport, mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import { describeFeature, loadFeature, setVitestCucumberConfiguration } from '@amiceli/vitest-cucumber'
-import { expect } from 'vitest'
+import { expect, vi } from 'vitest'
 import { clearNuxtData } from '#imports'
 
 setVitestCucumberConfiguration({ excludeTags: ['manual'] })
@@ -49,6 +49,11 @@ const seatGuest = async (
 // real useUserSession returns an empty (unauthenticated) session in tests;
 // only navigateTo needs stubbing so the redirect target is returned inline
 mockNuxtImport('navigateTo', () => (to: string) => to)
+
+// mountSuspended's route option doesn't reach useRoute() here, so query params
+// are injected via a hoisted mutable (see rsvp test conventions)
+const routeState = vi.hoisted(() => ({ query: {} as Record<string, string> }))
+mockNuxtImport('useRoute', () => () => ({ query: routeState.query }))
 
 const authMiddleware = async () =>
   (await import('../../app/middleware/auth.global')).default as unknown as (to: { path: string }) => unknown
@@ -230,6 +235,133 @@ describeFeature(feature, (f) => {
       s.When('its markup is inspected', () => {})
       s.Then('the tulip corner art is placed on the handout page', () => {
         expect(src).toContain('FloralTulipCorner')
+      })
+    })
+  })
+
+  f.Rule('Decorative back page on RSVP invite letters', (r) => {
+    const parties = [
+      { id: 1, name: 'The Smiths', token: 'tok-smith-abc' },
+      { id: 2, name: 'The Patels', token: 'tok-patel-xyz' },
+    ]
+    /** mount the letters page and return front/back page wrappers */
+    const mountLetters = async (query: Record<string, string> = {}) => {
+      clearNuxtData()
+      routeState.query = query
+      const wrapper = await mountSuspended(await printPage('letters'))
+      return {
+        wrapper,
+        pages: wrapper.findAll('[data-print-page]'),
+        backs: wrapper.findAll('[data-letter-back]'),
+      }
+    }
+    type Mounted = Awaited<ReturnType<typeof mountLetters>>
+
+    r.RuleScenario('Every letter is followed by a back page', (s) => {
+      let mounted: Mounted
+      s.Given('multiple parties with tokens', () => {
+        registerEndpoint('/api/admin/parties', { method: 'GET', handler: () => ({ parties }) })
+      })
+      s.When('the letters batch view renders', async () => {
+        mounted = await mountLetters()
+      })
+      s.Then('each letter is followed by an A5 back page and the page count is twice the number of parties', () => {
+        expect(mounted.pages).toHaveLength(parties.length * 2)
+        mounted.pages.forEach((page, index) => {
+          // even pages are fronts, odd pages are backs
+          expect(page.find(index % 2 === 0 ? '[data-letter]' : '[data-letter-back]').exists()).toBe(true)
+          expect(page.classes()).toContain('print-page-a5')
+        })
+      })
+    })
+
+    r.RuleScenario('Back page carries no party data', (s) => {
+      let mounted: Mounted
+      s.Given('multiple parties with tokens', () => {
+        registerEndpoint('/api/admin/parties', { method: 'GET', handler: () => ({ parties }) })
+      })
+      s.When('the letters batch view renders', async () => {
+        mounted = await mountLetters()
+      })
+      s.Then('no back page contains a party name, a QR code, or an RSVP URL', () => {
+        expect(mounted.backs).toHaveLength(parties.length)
+        for (const back of mounted.backs) {
+          for (const party of parties) {
+            expect(back.text()).not.toContain(party.name)
+            expect(back.text()).not.toContain(party.token)
+          }
+          expect(back.find('[data-qr]').exists()).toBe(false)
+          expect(back.text()).not.toContain('?t=')
+        }
+      })
+    })
+
+    r.RuleScenario('Back page shows monogram, divider, and inset border', (s) => {
+      let mounted: Mounted
+      s.Given('multiple parties with tokens', () => {
+        registerEndpoint('/api/admin/parties', { method: 'GET', handler: () => ({ parties }) })
+      })
+      s.When('the letters batch view renders', async () => {
+        mounted = await mountLetters()
+      })
+      s.Then('each back page shows the C & M monogram, a floral divider below it, and an inset hairline border rectangle', () => {
+        expect(mounted.backs.length).toBeGreaterThan(0)
+        for (const back of mounted.backs) {
+          expect(back.find('[data-monogram]').text()).toMatch(/C\s*&\s*M/)
+          expect(back.find('[data-back-divider]').exists()).toBe(true)
+          expect(back.find('[data-back-border]').exists()).toBe(true)
+        }
+      })
+    })
+
+    r.RuleScenario('Single-party reprint includes its back', (s) => {
+      let mounted: Mounted
+      s.Given('multiple parties with tokens', () => {
+        registerEndpoint('/api/admin/parties', { method: 'GET', handler: () => ({ parties }) })
+      })
+      s.When('the letters view renders for a single party via the party query parameter', async () => {
+        mounted = await mountLetters({ party: '1' })
+      })
+      s.Then('one letter and one back page are rendered', () => {
+        expect(mounted.wrapper.findAll('[data-letter]')).toHaveLength(1)
+        expect(mounted.backs).toHaveLength(1)
+      })
+    })
+  })
+
+  f.Rule('Letter back floral art follows the arch construction', (r) => {
+    // source-level, same convention as the tulip corner art checks
+    const componentSrc = () => readFileSync('app/components/PrintLetterBack.vue', 'utf8')
+
+    r.RuleScenario('Art uses theme tokens and scoped ids', (s) => {
+      let src = ''
+      s.Given('the letter back component', () => {
+        src = componentSrc()
+      })
+      s.When('its markup is inspected', () => {})
+      s.Then('its floral fills reference theme colour tokens, its defs ids are scoped per instance, and the art is instanced via use references', () => {
+        expect(src).toContain('var(--color-')
+        // no literal hex fills on the art
+        expect(src).not.toMatch(/fill="#/)
+        // ids scoped per instance via useId, instanced with <use>
+        expect(src).toContain('useId()')
+        expect(src).toContain('`${uid}-')
+        expect(src).toContain('<use')
+      })
+    })
+
+    r.RuleScenario('Reduced motion suppresses the reveal', (s) => {
+      let src = ''
+      s.Given('the letter back component', () => {
+        src = componentSrc()
+      })
+      s.When('its markup is inspected', () => {})
+      s.Then('the reveal animation is declared only inside a prefers-reduced-motion no-preference block', () => {
+        const media = src.match(/@media \(prefers-reduced-motion: no-preference\) \{[\s\S]*?\n\}/)?.[0] ?? ''
+        expect(media).toContain('animation:')
+        // every animation declaration lives inside that media block
+        const count = (text: string) => (text.match(/animation:/g) ?? []).length
+        expect(count(src)).toBe(count(media))
       })
     })
   })
