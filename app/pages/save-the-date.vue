@@ -30,6 +30,12 @@ const nightLabel = (offsetDays: number) => {
   });
 };
 
+const photos = ["/photos/save-the-date-1.jpg", "/photos/save-the-date-2.jpg"];
+const photoIndex = ref(0);
+const cyclePhoto = () => {
+  photoIndex.value = (photoIndex.value + 1) % photos.length;
+};
+
 const form = reactive({
   name: "",
   phone: "",
@@ -87,10 +93,14 @@ useSeoMeta({
     <FloralHeader floral-classes="md:w-[50vw]" />
     <main class="mt-16 relative z-10 mx-auto w-full max-w-3xl grow px-6 pb-8">
       <section v-reveal.focal class="pt-8 text-center sm:pt-24">
-        <p class="text-xs font-medium uppercase tracking-[0.4em] text-petal-deep">
+        <p
+          class="text-xs font-medium uppercase tracking-[0.4em] text-petal-deep"
+        >
           Save the date
         </p>
-        <h1 class="mt-4 font-display text-5xl font-light italic text-ink sm:text-6xl">
+        <h1
+          class="mt-4 font-display text-5xl font-light italic text-ink sm:text-6xl"
+        >
           Ciera <span class="text-petal">&amp;</span> Martin
         </h1>
 
@@ -99,14 +109,21 @@ useSeoMeta({
           variant="circle"
           class="mt-12 w-64 sm:mt-16 sm:w-80 md:mt-20 md:w-102 lg:w-120"
         >
-          <NuxtImg
-            src="/photos/couple.jpg"
-            alt="Ciera and Martin"
-            width="960"
-            height="960"
-            sizes="256px sm:320px md:408px lg:480px"
-            class="aspect-square h-auto w-full object-cover"
-          />
+          <button
+            type="button"
+            class="block w-full cursor-pointer"
+            aria-label="Show next photo"
+            @click="cyclePhoto"
+          >
+            <NuxtImg
+              :src="photos[photoIndex]"
+              alt="Ciera and Martin"
+              width="960"
+              height="960"
+              sizes="256px sm:320px md:408px lg:480px"
+              class="aspect-square h-auto w-full object-cover"
+            />
+          </button>
         </FloralArch>
 
         <p class="mt-12 font-display text-3xl text-ink sm:text-4xl">
@@ -172,7 +189,7 @@ useSeoMeta({
               placeholder="e.g. Ciera &amp; Martin Forry-Pezet"
               class="mt-1"
               :class="fieldClass"
-            >
+            />
           </label>
 
           <label v-reveal class="mt-4 block text-sm text-leaf-deep">
@@ -187,7 +204,7 @@ useSeoMeta({
               placeholder="e.g. 07700 000000"
               class="mt-1"
               :class="fieldClass"
-            >
+            />
           </label>
 
           <label v-reveal class="mt-4 block text-sm text-leaf-deep">
@@ -201,7 +218,7 @@ useSeoMeta({
               placeholder="House and street"
               class="mt-1"
               :class="fieldClass"
-            >
+            />
           </label>
 
           <label v-reveal class="mt-2 block text-sm text-leaf-deep">
@@ -213,7 +230,7 @@ useSeoMeta({
               autocomplete="address-line2"
               placeholder="Village or area (optional)"
               :class="fieldClass"
-            >
+            />
           </label>
 
           <div v-reveal class="mt-4 flex flex-col gap-4 sm:flex-row">
@@ -228,7 +245,7 @@ useSeoMeta({
                 class="mt-1"
                 placeholder="e.g. Taunton"
                 :class="fieldClass"
-              >
+              />
             </label>
             <label class="block text-sm text-leaf-deep sm:w-40">
               Postcode<span class="text-petal-deep">*</span>
@@ -241,7 +258,7 @@ useSeoMeta({
                 class="mt-1"
                 placeholder="e.g. TA4 4DS"
                 :class="fieldClass"
-              >
+              />
             </label>
           </div>
 
@@ -255,7 +272,7 @@ useSeoMeta({
               required
               class="mt-1"
               :class="fieldClass"
-            >
+            />
           </label>
 
           <fieldset
@@ -282,7 +299,7 @@ useSeoMeta({
                 type="checkbox"
                 name="stayNightBefore"
                 class="mt-0.5 size-5 shrink-0 rounded border-leaf/40 accent-petal"
-              >
+              />
               <span
                 >The night before — {{ nightLabel(-1) }}
                 <span class="block text-leaf-deep/70"
@@ -298,7 +315,7 @@ useSeoMeta({
                 type="checkbox"
                 name="stayNightOf"
                 class="mt-0.5 size-5 shrink-0 rounded border-leaf/40 accent-petal"
-              >
+              />
               <span
                 >The night of the wedding — {{ nightLabel(0) }}
                 <span class="block text-leaf-deep/70"
