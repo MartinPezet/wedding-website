@@ -44,10 +44,16 @@ describe('floral glyphs use hydrangea florets + tulip cups', () => {
 
   it('FloralArch base ends anchor on mopheads', () => {
     const src = read('FloralArch.vue')
-    // floret/mophead position swap at both arc base ends
-    expect(src).toMatch(/ref_\('flb'\)" transform="translate\(20,104\)/)
-    expect(src).toMatch(/ref_\('bloomX'\)" transform="translate\(1,140\)/)
-    expect(src).toMatch(/ref_\('fla'\)" transform="translate\(310,104\)/)
-    expect(src).toMatch(/ref_\('bloomX'\)" transform="translate\(329,140\)/)
+    // placement lives in the bloom array; floret/mophead swap at both arc base ends
+    for (const [id, x, y] of [
+      ['flb', 20, 104],
+      ['bloomX', 1, 140],
+      ['fla', 310, 104],
+      ['bloomX', 329, 140],
+    ] as const) {
+      expect(src, `${id} at ${x},${y}`).toMatch(
+        new RegExp(`id: '${id}', x: ${x}, y: ${y}\\b`),
+      )
+    }
   })
 })
