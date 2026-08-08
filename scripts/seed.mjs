@@ -12,10 +12,9 @@ if (url.startsWith('file:')) mkdirSync('./.data', { recursive: true })
 const client = createClient({ url, authToken: process.env.NUXT_DB_AUTH_TOKEN || undefined })
 await migrate(drizzle(client), { migrationsFolder: './server/db/migrations' })
 
-// placeholder values until real date/deadline confirmed
 const settings = {
-  wedding_date: '2027-06-12',
-  rsvp_deadline: '2027-05-01T23:59:59Z',
+  wedding_date: '2027-01-16',
+  rsvp_deadline: '2026-11-30T23:59:59Z',
 }
 for (const [key, value] of Object.entries(settings)) {
   await client.execute({

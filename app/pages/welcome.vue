@@ -39,16 +39,21 @@ useSeoMeta({
 
 <template>
   <section class="pt-24 text-center sm:pt-36">
-    <p class="text-sm uppercase tracking-widest text-petal-deep">Welcome</p>
-    <h1 class="mt-4 text-5xl text-ink sm:text-6xl">Ciera &amp; Martin</h1>
-    <p v-if="inviteFallback" class="mt-6 text-leaf-deep">
+    <div v-reveal.focal>
+      <p class="text-sm uppercase tracking-widest text-petal-deep">Welcome</p>
+      <h1 class="mt-4 text-5xl text-ink sm:text-6xl">
+        Ciera <span class="text-petal">&amp;</span> Martin
+      </h1>
+    </div>
+    <p v-if="inviteFallback" v-reveal class="mt-6 text-leaf-deep">
       Hmm, that link didn't quite work — no worries! Just enter the password from your invitation below.
     </p>
-    <p v-else class="mt-6 text-leaf-deep">Enter the password from your invitation.</p>
+    <p v-else v-reveal class="mt-6 text-leaf-deep">Enter the password from your invitation.</p>
 
     <form class="mx-auto mt-8 flex max-w-xs flex-col gap-3" @submit.prevent="submit">
       <input
         v-model="password"
+        v-reveal
         type="password"
         name="password"
         autocomplete="current-password"
@@ -57,6 +62,7 @@ useSeoMeta({
         class="rounded-full border border-leaf/40 bg-white/70 px-5 py-3 text-center text-ink placeholder:text-leaf/60 focus:border-petal focus:outline-none"
       >
       <button
+        v-reveal
         type="submit"
         :disabled="pending"
         class="rounded-full bg-leaf-deep px-5 py-3 font-display text-cream transition hover:bg-leaf disabled:opacity-60"

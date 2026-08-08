@@ -58,3 +58,23 @@ Feature: Site gate
       Given a valid party token
       When a visitor opens a site URL carrying that token with different letter casing
       Then a session is granted and the party is identified exactly as if the casing matched
+
+  @req:gated-visitors-are-offered-no-navigation
+  Rule: Gated visitors are offered no navigation
+    Until a session exists the header offers no nav links, no menu control and no
+    home link; presentation only, route protection is enforced separately.
+
+    Scenario: No navigation before the gate
+      Given a visitor without a session
+      When the site header renders
+      Then it offers no navigation links, no menu control, and no link to the home page
+
+    Scenario: Navigation returns after sign-in
+      Given a visitor with a valid session
+      When the site header renders
+      Then the full site navigation is shown
+
+    Scenario: Hiding navigation is not the access control
+      Given a visitor without a session
+      When they request a gated route directly
+      Then they are redirected to the gate regardless of whether any link to it was rendered

@@ -4,6 +4,18 @@ import handoutJson from './handout.json'
 import menuJson from './menu.json'
 import scheduleJson from './schedule.json'
 import travelJson from './hotels.json'
+import venueJson from './venue.json'
+
+/** the booked venue — the one place its name, address, and links live */
+export interface Venue {
+  name: string
+  /** postal address between the venue name and the county */
+  addressLines: string[]
+  county: string
+  postcode: string
+  url: string
+  mapsUrl: string
+}
 
 export interface ScheduleEvent {
   name: string
@@ -76,6 +88,7 @@ export interface Handout {
   sections: HandoutSection[]
 }
 
+export const venue: Venue = venueJson
 export const schedule: ScheduleEvent[] = scheduleJson
 export const travel: TravelInfo = travelJson
 export const faq: FaqEntry[] = faqJson

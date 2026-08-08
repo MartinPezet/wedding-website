@@ -1,13 +1,17 @@
 <script setup lang="ts">
-import { schedule } from "#shared/content";
+import { schedule, venue } from "#shared/content";
 
-// footer date per mockup 1a: "17 · 01 · 2027"
+// footer date per mockup 1a: "16 · 01 · 2027"
 const weddingDate = new Date(schedule[0]!.start);
 const footerDate = [
   String(weddingDate.getDate()).padStart(2, "0"),
   String(weddingDate.getMonth() + 1).padStart(2, "0"),
   weddingDate.getFullYear(),
 ].join(" · ");
+
+// the site is password gated: until a visitor is through it, every nav target
+// bounces straight back to /welcome, so the whole nav stays hidden
+const { loggedIn } = useUserSession();
 
 // mobile dropdown nav; closes on navigation
 const menuOpen = ref(false);
@@ -32,11 +36,16 @@ watch(
         class="flex flex-col items-center sm:block mx-auto max-w-3xl px-6 pt-4 pb-1 text-center sm:py-3"
       >
         <NuxtLink
+          v-if="loggedIn"
           to="/"
           class="font-display text-2xl text-ink max-sm:leading-none"
           >Ciera <span class="text-petal">&amp;</span> Martin</NuxtLink
         >
+        <p v-else class="font-display text-2xl text-ink max-sm:leading-none">
+          Ciera <span class="text-petal">&amp;</span> Martin
+        </p>
         <button
+          v-if="loggedIn"
           type="button"
           class="w-fit p-1 transition-all duration-300 text-leaf-deep hover:text-petal sm:hidden"
           :class="{ '-rotate-180': menuOpen }"
@@ -61,6 +70,7 @@ watch(
           </svg>
         </button>
         <nav
+          v-if="loggedIn"
           id="site-nav"
           class="mt-3 flex-col gap-y-3 pb-4 text-sm uppercase tracking-widest text-leaf-deep sm:mt-1.5 sm:flex sm:flex-row sm:flex-wrap sm:justify-center sm:gap-x-6 sm:gap-y-2 sm:pb-0"
           :class="menuOpen ? 'flex' : 'hidden'"
@@ -115,7 +125,7 @@ watch(
         C <span class="italic text-petal">&amp;</span> M
       </p>
       <p class="mt-3 text-[11px] uppercase tracking-[0.34em] text-ink/60">
-        {{ footerDate }} — Devon, England
+        {{ footerDate }} — {{ venue.county }}, England
       </p>
     </footer>
   </div>

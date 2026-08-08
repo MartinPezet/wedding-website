@@ -399,4 +399,118 @@ describeFeature(feature, (f) => {
       })
     })
   })
+  f.Rule('Save-the-date responses in admin', (r) => {
+    const seedResponse = async (db: Db, over: Record<string, unknown>) => {
+      const { saveResponse } = await import('../../server/utils/save-the-date')
+      const result = await saveResponse(db, {
+        name: 'The Windsors',
+        phone: '07911 123456',
+        addressLine1: '12 Orchard Lane',
+        addressLine2: 'Nether Stowey',
+        city: 'Bridgwater',
+        postcode: 'TA5 1AA',
+        country: 'United Kingdom',
+        ...over,
+      })
+      expect(result.ok).toBe(true)
+    }
+
+    const mountResponsesPage = async (db: Db) => {
+      const { listResponses } = await import('../../server/utils/save-the-date')
+      registerEndpoint('/api/admin/save-the-date', {
+        method: 'GET',
+        handler: async () => ({ responses: await listResponses(db) }),
+      })
+      return mountAdminPage('save-the-date')
+    }
+
+    r.RuleScenario('Responses listed', (s) => {
+      let db: Db
+      let wrapper: Wrapper
+      s.Given('stored save-the-date responses', async () => {
+        db = await freshDb()
+        await seedResponse(db, { phone: '07911 123456', name: 'The Windsors', stayNightOf: true })
+        await seedResponse(db, { phone: '07912 345678', name: 'The Beaumonts', addressLine1: '3 Mill Cottages' })
+      })
+      s.When('the admin opens the save-the-date responses page', async () => {
+        wrapper = await mountResponsesPage(db)
+        await flush()
+      })
+      s.Then('every response is listed with name, phone, full address, both room-night flags, and submission time, newest first', () => {
+        const text = wrapper.text()
+        expect(text).toContain('The Windsors')
+        expect(text).toContain('The Beaumonts')
+        expect(text).toContain('+447911123456')
+        expect(text).toContain('12 Orchard Lane')
+        expect(text).toContain('Nether Stowey')
+        expect(text).toContain('Bridgwater')
+        expect(text).toContain('TA5 1AA')
+        expect(text).toContain('3 Mill Cottages')
+        // newest first: The Beaumonts was stored second
+        expect(text.indexOf('The Beaumonts')).toBeLessThan(text.indexOf('The Windsors'))
+      })
+    })
+
+    r.RuleScenario('Room interest totals', (s) => {
+      let db: Db
+      let wrapper: Wrapper
+      s.Given('responses with a mix of room-night interest', async () => {
+        db = await freshDb()
+        await seedResponse(db, { phone: '07911 123456', stayNightBefore: true, stayNightOf: true })
+        await seedResponse(db, { phone: '07912 345678', stayNightBefore: false, stayNightOf: true })
+        await seedResponse(db, { phone: '07400 123456', stayNightBefore: false, stayNightOf: false })
+      })
+      s.When('the page is rendered', async () => {
+        wrapper = await mountResponsesPage(db)
+        await flush()
+      })
+      s.Then('the night-before, night-of, and either-night counts match the stored data', () => {
+        const totals = wrapper.findAll('[data-interest-total]')
+          .map(node => [node.attributes('data-interest-total'), node.text()])
+        expect(Object.fromEntries(totals)).toMatchObject({
+          'night-before': expect.stringContaining('1'),
+          'night-of': expect.stringContaining('2'),
+          'either': expect.stringContaining('2'),
+        })
+      })
+    })
+
+    r.RuleScenario('Unauthenticated access blocked', (s) => {
+      let outcome: { statusCode?: number } | undefined
+      s.Given('a visitor without an admin session', () => {})
+      s.When('they request the save-the-date responses data endpoint', async () => {
+        // Nitro-only auto-imports stay bare globals under the test transform
+        vi.stubGlobal('defineEventHandler', (handler: unknown) => handler)
+        const guard = (await import('../../server/middleware/admin-guard')).default as unknown as
+          (event: unknown) => Promise<unknown>
+        vi.stubGlobal('getUserSession', async () => null)
+        vi.stubGlobal('getHeader', () => '')
+        vi.stubGlobal('useRuntimeConfig', () => ({ backupSecret: '' }))
+        outcome = await guard({ path: '/api/admin/save-the-date' })
+          .then(() => undefined, (error: { statusCode?: number }) => error)
+      })
+      s.Then('access is refused and no response data is returned', () => {
+        expect(outcome?.statusCode).toBe(401)
+        vi.unstubAllGlobals()
+      })
+    })
+
+    r.RuleScenario('No responses yet', (s) => {
+      let db: Db
+      let wrapper: Wrapper
+      s.Given('no stored save-the-date responses', async () => {
+        db = await freshDb()
+      })
+      s.When('the admin opens the page', async () => {
+        wrapper = await mountResponsesPage(db)
+        await flush()
+      })
+      s.Then('an empty state is shown and all interest totals read zero', () => {
+        expect(wrapper.text()).toMatch(/no (save-the-date )?responses/i)
+        for (const node of wrapper.findAll('[data-interest-total]')) {
+          expect(node.text()).toContain('0')
+        }
+      })
+    })
+  })
 })

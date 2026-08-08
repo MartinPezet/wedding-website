@@ -3,6 +3,7 @@ import { menu } from '#shared/content'
 import { COURSE_FIELDS } from '#shared/utils/menu'
 import type { Db } from './db'
 import { getPartyList } from './admin'
+import { listResponses } from './save-the-date'
 
 type GuestRow = Awaited<ReturnType<typeof getPartyList>>[number]['guests'][number]
 
@@ -109,5 +110,37 @@ export async function buildFullWorkbook(db: Db): Promise<Uint8Array> {
     }
   }
   styleHeader(sheet)
+
+  // save-the-date replies: addresses for posting invitations + room interest.
+  // Couple-only — never added to the venue workbook.
+  const saveTheDate = workbook.addWorksheet('Save the Date')
+  saveTheDate.columns = [
+    { header: 'Name', key: 'name', width: 28 },
+    { header: 'Phone', key: 'phone', width: 18 },
+    { header: 'Address line 1', key: 'addressLine1', width: 30 },
+    { header: 'Address line 2', key: 'addressLine2', width: 24 },
+    { header: 'Town or city', key: 'city', width: 22 },
+    { header: 'Postcode', key: 'postcode', width: 12 },
+    { header: 'Country', key: 'country', width: 20 },
+    { header: 'Night before', key: 'nightBefore', width: 14 },
+    { header: 'Night of', key: 'nightOf', width: 12 },
+    { header: 'Submitted', key: 'submitted', width: 22 },
+  ]
+  for (const response of await listResponses(db)) {
+    saveTheDate.addRow({
+      name: response.name,
+      phone: response.phone,
+      addressLine1: response.addressLine1,
+      addressLine2: response.addressLine2 ?? '',
+      city: response.city,
+      postcode: response.postcode,
+      country: response.country,
+      nightBefore: response.stayNightBefore ? 'Yes' : '',
+      nightOf: response.stayNightOf ? 'Yes' : '',
+      submitted: response.createdAt,
+    })
+  }
+  styleHeader(saveTheDate)
+
   return new Uint8Array(await workbook.xlsx.writeBuffer())
 }

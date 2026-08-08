@@ -184,6 +184,101 @@ describeFeature(feature, (f) => {
     })
   })
 
+  f.Rule('Save-the-date response data model', (r) => {
+    const submission = {
+      name: 'The Windsors',
+      phone: '07911 123456',
+      addressLine1: '12 Orchard Lane',
+      addressLine2: 'Nether Stowey',
+      city: 'Bridgwater',
+      postcode: 'TA5 1AA',
+      country: 'United Kingdom',
+      stayNightBefore: true,
+      stayNightOf: false,
+    }
+    const save = async (db: Db, input: Record<string, unknown>) => {
+      const { saveResponse } = await import('../../server/utils/save-the-date')
+      return saveResponse(db, input)
+    }
+    const list = async (db: Db) => {
+      const { listResponses } = await import('../../server/utils/save-the-date')
+      return listResponses(db)
+    }
+
+    r.RuleScenario('Response stored', (s) => {
+      let db: Db
+      let stored: Awaited<ReturnType<typeof list>>
+      s.Given('a save-the-date response with a name, phone, address, and room-night interest', async () => {
+        db = await freshDb()
+      })
+      s.When('it is saved and retrieved', async () => {
+        expect((await save(db, submission)).ok).toBe(true)
+        stored = await list(db)
+      })
+      s.Then('it carries the name, E.164 phone, all address parts, both room-night flags, and a created timestamp', () => {
+        expect(stored).toHaveLength(1)
+        expect(stored[0]).toMatchObject({
+          name: 'The Windsors',
+          phone: '+447911123456',
+          addressLine1: '12 Orchard Lane',
+          addressLine2: 'Nether Stowey',
+          city: 'Bridgwater',
+          postcode: 'TA5 1AA',
+          country: 'United Kingdom',
+          stayNightBefore: true,
+          stayNightOf: false,
+        })
+        expect(stored[0]!.createdAt).toMatch(/^\d{4}-\d{2}-\d{2}T/)
+      })
+    })
+
+    r.RuleScenario('Phone is the identity', (s) => {
+      let db: Db
+      let stored: Awaited<ReturnType<typeof list>>
+      s.Given('a stored response for a phone number', async () => {
+        db = await freshDb()
+        expect((await save(db, submission)).ok).toBe(true)
+      })
+      s.When('a second response is saved with the same phone number', async () => {
+        // same number typed in international form, different address and interest
+        expect((await save(db, {
+          ...submission,
+          phone: '+44 7911 123456',
+          addressLine1: '3 Mill Cottages',
+          stayNightOf: true,
+        })).ok).toBe(true)
+        stored = await list(db)
+      })
+      s.Then('the existing row is updated and the total number of responses is unchanged', () => {
+        expect(stored).toHaveLength(1)
+        expect(stored[0]).toMatchObject({
+          addressLine1: '3 Mill Cottages',
+          stayNightOf: true,
+        })
+      })
+    })
+
+    r.RuleScenario('Responses are independent of the invite data', (s) => {
+      let db: Db
+      let counts: { parties: number, guests: number } = { parties: 0, guests: 0 }
+      s.Given('save-the-date responses stored', async () => {
+        db = await freshDb()
+        expect((await save(db, submission)).ok).toBe(true)
+        expect((await save(db, { ...submission, phone: '07912 345678' })).ok).toBe(true)
+      })
+      s.When('parties and guests are counted', async () => {
+        const { guests, parties } = await import('../../server/db/schema')
+        counts = {
+          parties: (await db.select().from(parties)).length,
+          guests: (await db.select().from(guests)).length,
+        }
+      })
+      s.Then('no party or guest rows have been created by them', () => {
+        expect(counts).toEqual({ parties: 0, guests: 0 })
+      })
+    })
+  })
+
   f.Rule('Database works locally and in production', (r) => {
     r.RuleScenario('Environment switch', (s) => {
       const fileUrl = `file:${join(tmpdir(), `wedding-test-${Date.now()}.db`).replaceAll('\\', '/')}`

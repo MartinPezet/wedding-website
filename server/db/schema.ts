@@ -41,6 +41,24 @@ export const guests = sqliteTable('guests', {
   seatIndex: integer('seat_index'),
 })
 
+// public save-the-date interest form: households the couple have not yet turned
+// into parties. Phone is the identity — a resubmission updates the same row.
+export const saveTheDateResponses = sqliteTable('save_the_date_responses', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  name: text('name').notNull(),
+  phone: text('phone').notNull().unique(),
+  addressLine1: text('address_line1').notNull(),
+  addressLine2: text('address_line2'),
+  city: text('city').notNull(),
+  postcode: text('postcode').notNull(),
+  country: text('country').notNull(),
+  // interest only — the couple block-book the rooms themselves
+  stayNightBefore: integer('stay_night_before', { mode: 'boolean' }).notNull().default(false),
+  stayNightOf: integer('stay_night_of', { mode: 'boolean' }).notNull().default(false),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
+})
+
 export const settings = sqliteTable('settings', {
   key: text('key').primaryKey(),
   value: text('value').notNull(),

@@ -202,4 +202,55 @@ describeFeature(feature, (f) => {
       })
     })
   })
+  f.Rule('Gated visitors are offered no navigation', (r) => {
+    // the header lives in the default layout; its gating is asserted here at the
+    // source level because this file runs Nitro handlers in a node environment.
+    // tests/unit/layout-nav.test.ts mounts the layout and asserts what renders.
+    const layout = () => readFileSync('app/layouts/default.vue', 'utf8')
+
+    r.RuleScenario('No navigation before the gate', (s) => {
+      let markup = ''
+      s.Given('a visitor without a session', () => {})
+      s.When('the site header renders', () => {
+        markup = layout()
+      })
+      s.Then('it offers no navigation links, no menu control, and no link to the home page', () => {
+        // every navigable control in the header sits behind the session check
+        const nav = markup.slice(markup.indexOf('<header'), markup.indexOf('</header>'))
+        for (const control of ['<nav', '<button', '<NuxtLink']) {
+          const at = nav.indexOf(control)
+          expect(at, `${control} present in the header`).toBeGreaterThan(-1)
+          expect(nav.slice(at, at + 160), `${control} gated on loggedIn`).toContain('v-if="loggedIn"')
+        }
+        expect(markup).toContain('const { loggedIn } = useUserSession()')
+      })
+    })
+
+    r.RuleScenario('Navigation returns after sign-in', (s) => {
+      let markup = ''
+      s.Given('a visitor with a valid session', () => {})
+      s.When('the site header renders', () => {
+        markup = layout()
+      })
+      s.Then('the full site navigation is shown', () => {
+        const nav = markup.slice(markup.indexOf('id="site-nav"'), markup.indexOf('</nav>'))
+        for (const route of ['/', '/schedule', '/rsvp', '/gifts', '/travel', '/faq']) {
+          expect(nav, `nav links to ${route}`).toContain(`to="${route}"`)
+        }
+      })
+    })
+
+    r.RuleScenario('Hiding navigation is not the access control', (s) => {
+      let outcome: unknown
+      s.Given('a visitor without a session', () => {})
+      s.When('they request a gated route directly', async () => {
+        const middleware = (await import('../../app/middleware/auth.global')).default as unknown as
+          (to: { path: string }) => unknown
+        outcome = middleware({ path: '/schedule' })
+      })
+      s.Then('they are redirected to the gate regardless of whether any link to it was rendered', () => {
+        expect(outcome).toBe('/welcome')
+      })
+    })
+  })
 })

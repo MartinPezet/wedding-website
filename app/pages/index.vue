@@ -1,13 +1,15 @@
 <template>
   <section class="pt-12 text-center sm:pt-24">
-    <p class="text-sm uppercase tracking-widest text-petal-deep">
-      We're getting married
-    </p>
-    <h1 class="mt-4 text-5xl text-ink sm:text-6xl">
-      Ciera <span class="text-petal">&amp;</span> Martin
-    </h1>
+    <div v-reveal.focal>
+      <p class="text-sm uppercase tracking-widest text-petal-deep">
+        We're getting married
+      </p>
+      <h1 class="mt-4 text-5xl text-ink sm:text-6xl">
+        Ciera <span class="text-petal">&amp;</span> Martin
+      </h1>
+    </div>
 
-    <FloralArch variant="arch" class="mt-12 w-64 sm:w-80 md:w-102">
+    <FloralArch v-reveal variant="arch" class="mt-12 w-64 sm:w-80 md:w-102">
       <NuxtImg
         src="/photos/couple.jpg"
         alt="Ciera and Martin"
@@ -18,7 +20,7 @@
       />
     </FloralArch>
 
-    <p class="mt-10 text-leaf-deep">
+    <p v-reveal class="mt-10 text-leaf-deep">
       Everything you need is here — the
       <NuxtLink
         to="/schedule"

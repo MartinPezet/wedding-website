@@ -9,8 +9,8 @@ useSeoMeta({
 
 <template>
   <section class="pt-12 text-center sm:pt-24">
-    <FloralHeading eyebrow="Gifts">No boxes to carry</FloralHeading>
-    <FloralArch variant="circle" class="mt-10 w-full max-w-72 sm:max-w-92">
+    <FloralHeading v-reveal.focal eyebrow="Gifts">No boxes to carry</FloralHeading>
+    <FloralArch v-reveal variant="circle" class="mt-10 w-full max-w-72 sm:max-w-92">
       <NuxtImg
         src="/photos/couple.jpg"
         alt="Ciera and Martin"
@@ -21,10 +21,11 @@ useSeoMeta({
       />
     </FloralArch>
 
-    <p class="mx-auto mt-8 max-w-prose text-lg text-ink/80">
+    <p v-reveal class="mx-auto mt-8 max-w-prose text-lg text-ink/80">
       {{ gifts.message }}
     </p>
     <a
+      v-reveal
       :href="gifts.url"
       target="_blank"
       rel="noopener"
