@@ -10,7 +10,8 @@ useSeoMeta({
 <template>
   <section class="pt-12 text-center sm:pt-24">
     <FloralHeading v-reveal.focal eyebrow="Gifts">No boxes to carry</FloralHeading>
-    <FloralArch v-reveal variant="circle" class="mt-10 w-full max-w-72 sm:max-w-92">
+    <!-- no v-reveal: the arch carries its own bloom, and both would drive transform -->
+    <FloralArch variant="circle" class="mt-10 w-full max-w-72 sm:max-w-92">
       <NuxtImg
         src="/photos/couple.jpg"
         alt="Ciera and Martin"

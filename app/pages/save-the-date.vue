@@ -87,10 +87,10 @@ useSeoMeta({
     <FloralHeader floral-classes="md:w-[50vw]" />
     <main class="mt-16 relative z-10 mx-auto w-full max-w-3xl grow px-6 pb-8">
       <section v-reveal.focal class="pt-8 text-center sm:pt-24">
-        <p class="text-sm uppercase tracking-widest text-petal-deep">
+        <p class="text-xs font-medium uppercase tracking-[0.4em] text-petal-deep">
           Save the date
         </p>
-        <h1 class="mt-4 text-5xl text-ink sm:text-6xl">
+        <h1 class="mt-4 font-display text-5xl font-light italic text-ink sm:text-6xl">
           Ciera <span class="text-petal">&amp;</span> Martin
         </h1>
 
@@ -172,7 +172,7 @@ useSeoMeta({
               placeholder="e.g. Ciera &amp; Martin Forry-Pezet"
               class="mt-1"
               :class="fieldClass"
-            />
+            >
           </label>
 
           <label v-reveal class="mt-4 block text-sm text-leaf-deep">
@@ -187,7 +187,7 @@ useSeoMeta({
               placeholder="e.g. 07700 000000"
               class="mt-1"
               :class="fieldClass"
-            />
+            >
           </label>
 
           <label v-reveal class="mt-4 block text-sm text-leaf-deep">
@@ -201,7 +201,7 @@ useSeoMeta({
               placeholder="House and street"
               class="mt-1"
               :class="fieldClass"
-            />
+            >
           </label>
 
           <label v-reveal class="mt-2 block text-sm text-leaf-deep">
@@ -213,7 +213,7 @@ useSeoMeta({
               autocomplete="address-line2"
               placeholder="Village or area (optional)"
               :class="fieldClass"
-            />
+            >
           </label>
 
           <div v-reveal class="mt-4 flex flex-col gap-4 sm:flex-row">
@@ -228,7 +228,7 @@ useSeoMeta({
                 class="mt-1"
                 placeholder="e.g. Taunton"
                 :class="fieldClass"
-              />
+              >
             </label>
             <label class="block text-sm text-leaf-deep sm:w-40">
               Postcode<span class="text-petal-deep">*</span>
@@ -241,7 +241,7 @@ useSeoMeta({
                 class="mt-1"
                 placeholder="e.g. TA4 4DS"
                 :class="fieldClass"
-              />
+              >
             </label>
           </div>
 
@@ -255,7 +255,7 @@ useSeoMeta({
               required
               class="mt-1"
               :class="fieldClass"
-            />
+            >
           </label>
 
           <fieldset
@@ -282,7 +282,7 @@ useSeoMeta({
                 type="checkbox"
                 name="stayNightBefore"
                 class="mt-0.5 size-5 shrink-0 rounded border-leaf/40 accent-petal"
-              />
+              >
               <span
                 >The night before — {{ nightLabel(-1) }}
                 <span class="block text-leaf-deep/70"
@@ -298,7 +298,7 @@ useSeoMeta({
                 type="checkbox"
                 name="stayNightOf"
                 class="mt-0.5 size-5 shrink-0 rounded border-leaf/40 accent-petal"
-              />
+              >
               <span
                 >The night of the wedding — {{ nightLabel(0) }}
                 <span class="block text-leaf-deep/70"
@@ -325,8 +325,8 @@ useSeoMeta({
     </main>
     <footer class="relative z-10 py-10 text-center">
       <FloralDivider class="mx-auto w-40" />
-      <p class="mt-3 font-display text-2xl text-ink">
-        C <span class="italic text-petal">&amp;</span> M
+      <p class="mt-3 font-display text-2xl font-light italic text-ink">
+        C <span class="text-petal">&amp;</span> M
       </p>
       <p class="mt-3 text-[11px] uppercase tracking-[0.34em] text-ink/60">
         {{ footerDate }} — {{ venue.county }}, England

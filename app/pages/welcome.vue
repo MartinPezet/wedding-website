@@ -40,8 +40,8 @@ useSeoMeta({
 <template>
   <section class="pt-24 text-center sm:pt-36">
     <div v-reveal.focal>
-      <p class="text-sm uppercase tracking-widest text-petal-deep">Welcome</p>
-      <h1 class="mt-4 text-5xl text-ink sm:text-6xl">
+      <p class="text-xs font-medium uppercase tracking-[0.4em] text-petal-deep">Welcome</p>
+      <h1 class="mt-4 font-display text-5xl font-light italic text-ink sm:text-6xl">
         Ciera <span class="text-petal">&amp;</span> Martin
       </h1>
     </div>

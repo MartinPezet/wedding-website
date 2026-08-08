@@ -38,10 +38,10 @@ watch(
         <NuxtLink
           v-if="loggedIn"
           to="/"
-          class="font-display text-2xl text-ink max-sm:leading-none"
+          class="font-display text-2xl font-light italic text-ink max-sm:leading-none"
           >Ciera <span class="text-petal">&amp;</span> Martin</NuxtLink
         >
-        <p v-else class="font-display text-2xl text-ink max-sm:leading-none">
+        <p v-else class="font-display text-2xl font-light italic text-ink max-sm:leading-none">
           Ciera <span class="text-petal">&amp;</span> Martin
         </p>
         <button
@@ -121,8 +121,8 @@ watch(
       <FloralTulipCorner class="pointer-events-none absolute bottom-0 -left-2 w-14 sm:-left-3 sm:w-32" />
       <FloralTulipCorner class="pointer-events-none absolute bottom-0 -right-2 w-14 -scale-x-100 sm:-right-3 sm:w-32" />
       <FloralDivider class="mx-auto w-40" />
-      <p class="mt-3 font-display text-2xl text-ink">
-        C <span class="italic text-petal">&amp;</span> M
+      <p class="mt-3 font-display text-2xl font-light italic text-ink">
+        C <span class="text-petal">&amp;</span> M
       </p>
       <p class="mt-3 text-[11px] uppercase tracking-[0.34em] text-ink/60">
         {{ footerDate }} — {{ venue.county }}, England
