@@ -27,7 +27,7 @@ useSeoMeta({
 <template>
   <!-- full-bleed blush band per mockup 1a; content re-centres inside -->
   <section class="mx-[calc(50%-50vw)] bg-blush px-6 py-12 sm:py-20">
-    <div class="text-center">
+    <div v-reveal.focal class="text-center">
       <FloralHeading eyebrow="Order of celebration">The Day</FloralHeading>
       <p class="mt-2 text-leaf-deep">{{ day }}</p>
       <a
@@ -48,6 +48,7 @@ useSeoMeta({
         <li
           v-for="(event, i) in schedule"
           :key="event.name"
+          v-reveal
           data-event
           class="relative grid grid-cols-[5.25rem_2.5rem_1fr] items-center gap-x-2 pb-10 last:pb-0 sm:grid-cols-[1fr_4.5rem_1fr] sm:gap-x-1"
         >

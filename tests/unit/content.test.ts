@@ -1,5 +1,17 @@
+import { readdirSync, readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { faq, gifts, schedule, travel } from '#shared/content'
+import { faq, gifts, schedule, travel, venue } from '#shared/content'
+
+describe('venue.json', () => {
+  it('names the booked venue with address, county, website, and maps link', () => {
+    expect(venue.name).toBe('St Audries Park')
+    expect(venue.addressLines.length).toBeGreaterThan(0)
+    for (const line of venue.addressLines) expect(line).toBeTruthy()
+    expect(venue.county).toBe('Somerset')
+    expect(venue.url).toMatch(/^https:\/\/(www\.)?audries-park\.co\.uk/)
+    expect(venue.mapsUrl).toMatch(/^https:\/\//)
+  })
+})
 
 describe('schedule.json', () => {
   it('has at least one event with name, times, location, and maps link', () => {
@@ -11,6 +23,24 @@ describe('schedule.json', () => {
       expect(new Date(event.end).getTime()).toBeGreaterThan(new Date(event.start).getTime())
       expect(event.location).toBeTruthy()
       expect(event.mapsUrl).toMatch(/^https:\/\//)
+    }
+  })
+
+  it('runs on the booked date at the booked venue', () => {
+    // wedding day is 2027-01-16; late events (carriages) roll into the small hours of the 17th
+    expect(schedule[0]!.start.startsWith('2027-01-16')).toBe(true)
+    for (const event of schedule) {
+      expect(event.start).toMatch(/^2027-01-1[67]T/)
+      expect(event.location).toContain(venue.name)
+    }
+  })
+})
+
+describe('content files', () => {
+  it('carry no placeholder venue references', () => {
+    const dir = 'shared/content'
+    for (const file of readdirSync(dir).filter(name => name.endsWith('.json'))) {
+      expect(readFileSync(`${dir}/${file}`, 'utf8')).not.toMatch(/Huntsham|Devon/i)
     }
   })
 })

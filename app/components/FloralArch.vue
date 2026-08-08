@@ -13,11 +13,75 @@ const clip: Record<'arch' | 'circle', string> = {
 
 const uid = useId()
 const ref_ = (name: string) => `#${uid}-${name}`
+
+/**
+ * Garland placement, as data so the arrangement can be retuned by editing
+ * numbers. Each entry grows from its own stem point rather than the group
+ * scaling as a whole — a whole-group scale starts collapsed over the photo.
+ */
+interface Sprig { id: string, x: number, y: number, rotate: number, scale: number }
+
+const leaves: Sprig[] = [
+  { id: 'lf1', x: -6, y: 164, rotate: -155, scale: 0.55 },
+  { id: 'lf1', x: -3, y: 152, rotate: -119, scale: 0.5 },
+  { id: 'lf2', x: 3, y: 133, rotate: 158, scale: 0.45 },
+  { id: 'lf1', x: 12, y: 115, rotate: -106, scale: 0.5 },
+  { id: 'lf3', x: 23, y: 98, rotate: 170, scale: 0.45 },
+  { id: 'lf2', x: 35, y: 83, rotate: -93, scale: 0.5 },
+  { id: 'lf1', x: 49, y: 69, rotate: -177, scale: 0.45 },
+  { id: 'lf3', x: 65, y: 57, rotate: -80, scale: 0.5 },
+  { id: 'lf2', x: 82, y: 46, rotate: -164, scale: 0.45 },
+  { id: 'lf1', x: 99, y: 38, rotate: -67, scale: 0.5 },
+  { id: 'lf3', x: 118, y: 31, rotate: -151, scale: 0.45 },
+  { id: 'lf3', x: 212, y: 31, rotate: 151, scale: 0.45 },
+  { id: 'lf1', x: 231, y: 38, rotate: 67, scale: 0.5 },
+  { id: 'lf2', x: 248, y: 46, rotate: 164, scale: 0.45 },
+  { id: 'lf3', x: 265, y: 57, rotate: 80, scale: 0.5 },
+  { id: 'lf1', x: 281, y: 69, rotate: 177, scale: 0.45 },
+  { id: 'lf2', x: 295, y: 83, rotate: 93, scale: 0.5 },
+  { id: 'lf3', x: 307, y: 98, rotate: -170, scale: 0.45 },
+  { id: 'lf1', x: 318, y: 115, rotate: 106, scale: 0.5 },
+  { id: 'lf2', x: 327, y: 133, rotate: -158, scale: 0.45 },
+  { id: 'lf1', x: 333, y: 152, rotate: 119, scale: 0.5 },
+  { id: 'lf1', x: 336, y: 164, rotate: 155, scale: 0.55 },
+]
+
+const blooms: Sprig[] = [
+  { id: 'flb', x: 20, y: 104, rotate: -30, scale: 0.7 },
+  { id: 'bloomX', x: 1, y: 140, rotate: -24, scale: 0.44 },
+  { id: 'bloomX', x: 46, y: 73, rotate: -15, scale: 0.4 },
+  { id: 'flc', x: 84, y: 46, rotate: 45, scale: 0.75 },
+  { id: 'bloomX', x: 116, y: 32, rotate: -8, scale: 0.46 },
+  { id: 'bloomX', x: 165, y: 19, rotate: 4, scale: 0.52 },
+  { id: 'bloomX', x: 214, y: 32, rotate: 12, scale: 0.46 },
+  { id: 'flc', x: 246, y: 46, rotate: -35, scale: 0.75 },
+  { id: 'bloomX', x: 284, y: 73, rotate: 20, scale: 0.4 },
+  { id: 'bloomX', x: 329, y: 140, rotate: 24, scale: 0.44 },
+  { id: 'fla', x: 310, y: 104, rotate: 30, scale: 0.7 },
+]
+
+// the garland grows outward from the apex of the arc, so each sprig waits for
+// the vine to reach it; blooms open a beat after the foliage around them
+const APEX_X = 165
+const HALF_SPAN = 171
+const VINE_START_MS = 550
+const VINE_TRAVEL_MS = 1250
+
+const reachedAt = (x: number, extra = 0) =>
+  Math.round(VINE_START_MS + (Math.abs(x - APEX_X) / HALF_SPAN) * VINE_TRAVEL_MS + extra)
+
+const sprigStyle = (sprig: Sprig, extra = 0) => ({
+  '--s': String(sprig.scale),
+  '--d': `${reachedAt(sprig.x, extra)}ms`,
+})
+
+/** both tulips rise once the vine has finished travelling down to them */
+const tulipStyle = (extra: number) => ({ '--d': `${VINE_START_MS + VINE_TRAVEL_MS + extra}ms` })
 </script>
 
 <template>
   <div class="floral-arch relative inline-block">
-    <div class="overflow-hidden" :style="{ clipPath: clip[variant] }">
+    <div class="floral-arch-photo overflow-hidden" :style="{ clipPath: clip[variant] }">
       <slot />
     </div>
 
@@ -112,51 +176,54 @@ const ref_ = (name: string) => `#${uid}-${name}`
         </g>
       </defs>
 
-      <g class="arch-reveal">
-        <path d="M-6,164 A175,175 0 0 1 336,164" stroke="var(--color-leaf-deep)" stroke-width="2.5" />
-        <use :href="ref_('lf1')" transform="translate(-6,164) rotate(-155) scale(0.55)" />
-        <use :href="ref_('lf1')" transform="translate(-3,152) rotate(-119) scale(0.5)" />
-        <use :href="ref_('lf2')" transform="translate(3,133) rotate(158) scale(0.45)" />
-        <use :href="ref_('lf1')" transform="translate(12,115) rotate(-106) scale(0.5)" />
-        <use :href="ref_('lf3')" transform="translate(23,98) rotate(170) scale(0.45)" />
-        <use :href="ref_('lf2')" transform="translate(35,83) rotate(-93) scale(0.5)" />
-        <use :href="ref_('lf1')" transform="translate(49,69) rotate(-177) scale(0.45)" />
-        <use :href="ref_('lf3')" transform="translate(65,57) rotate(-80) scale(0.5)" />
-        <use :href="ref_('lf2')" transform="translate(82,46) rotate(-164) scale(0.45)" />
-        <use :href="ref_('lf1')" transform="translate(99,38) rotate(-67) scale(0.5)" />
-        <use :href="ref_('lf3')" transform="translate(118,31) rotate(-151) scale(0.45)" />
-        <use :href="ref_('lf3')" transform="translate(212,31) rotate(151) scale(0.45)" />
-        <use :href="ref_('lf1')" transform="translate(231,38) rotate(67) scale(0.5)" />
-        <use :href="ref_('lf2')" transform="translate(248,46) rotate(164) scale(0.45)" />
-        <use :href="ref_('lf3')" transform="translate(265,57) rotate(80) scale(0.5)" />
-        <use :href="ref_('lf1')" transform="translate(281,69) rotate(177) scale(0.45)" />
-        <use :href="ref_('lf2')" transform="translate(295,83) rotate(93) scale(0.5)" />
-        <use :href="ref_('lf3')" transform="translate(307,98) rotate(-170) scale(0.45)" />
-        <use :href="ref_('lf1')" transform="translate(318,115) rotate(106) scale(0.5)" />
-        <use :href="ref_('lf2')" transform="translate(327,133) rotate(-158) scale(0.45)" />
-        <use :href="ref_('lf1')" transform="translate(333,152) rotate(119) scale(0.5)" />
-        <use :href="ref_('lf1')" transform="translate(336,164) rotate(155) scale(0.55)" />
-        <use :href="ref_('flb')" transform="translate(20,104) rotate(-30) scale(0.7)" />
-        <use :href="ref_('bloomX')" transform="translate(1,140) rotate(-24) scale(0.44)" />
-        <use :href="ref_('bloomX')" transform="translate(46,73) rotate(-15) scale(0.4)" />
-        <use :href="ref_('flc')" transform="translate(84,46) rotate(45) scale(0.75)" />
-        <use :href="ref_('bloomX')" transform="translate(116,32) rotate(-8) scale(0.46)" />
-        <use :href="ref_('bloomX')" transform="translate(165,19) rotate(4) scale(0.52)" />
-        <use :href="ref_('bloomX')" transform="translate(214,32) rotate(12) scale(0.46)" />
-        <use :href="ref_('flc')" transform="translate(246,46) rotate(-35) scale(0.75)" />
-        <use :href="ref_('bloomX')" transform="translate(284,73) rotate(20) scale(0.4)" />
-        <use :href="ref_('bloomX')" transform="translate(329,140) rotate(24) scale(0.44)" />
-        <use :href="ref_('fla')" transform="translate(310,104) rotate(30) scale(0.7)" />
+      <g class="garland">
+        <!-- vine draws outward from the apex, so it never crosses the photo -->
+        <path
+          class="vine"
+          pathLength="100"
+          d="M165,26.202 A175,175 0 0 0 -6,164"
+          stroke="var(--color-leaf-deep)"
+          stroke-width="2.5"
+        />
+        <path
+          class="vine"
+          pathLength="100"
+          d="M165,26.202 A175,175 0 0 1 336,164"
+          stroke="var(--color-leaf-deep)"
+          stroke-width="2.5"
+        />
+
+        <!-- placement lives on the wrapper so the CSS transform is free to animate -->
+        <g
+          v-for="(leaf, index) in leaves"
+          :key="`leaf-${index}`"
+          :transform="`translate(${leaf.x},${leaf.y}) rotate(${leaf.rotate})`"
+        >
+          <use :href="ref_(leaf.id)" class="sprout sprout-leaf" :style="sprigStyle(leaf)" />
+        </g>
+
+        <g
+          v-for="(bloom, index) in blooms"
+          :key="`bloom-${index}`"
+          :transform="`translate(${bloom.x},${bloom.y}) rotate(${bloom.rotate})`"
+        >
+          <use :href="ref_(bloom.id)" class="sprout sprout-bloom" :style="sprigStyle(bloom, 180)" />
+        </g>
+
         <template v-if="variant === 'arch'">
           <g transform="translate(20,446)">
-            <use :href="ref_('tstem')" transform="rotate(-14) scale(0.7)" />
-            <use :href="ref_('tstem')" transform="translate(-16,2) rotate(-30) scale(0.52)" />
-            <use :href="ref_('bud')" transform="translate(16,0) rotate(10) scale(0.62)" />
+            <g class="tulip-rise" :style="tulipStyle(0)">
+              <use :href="ref_('tstem')" transform="rotate(-14) scale(0.7)" />
+              <use :href="ref_('tstem')" transform="translate(-16,2) rotate(-30) scale(0.52)" />
+              <use :href="ref_('bud')" transform="translate(16,0) rotate(10) scale(0.62)" />
+            </g>
           </g>
           <g transform="translate(310,446)">
-            <use :href="ref_('tstem')" transform="rotate(14) scale(0.7)" />
-            <use :href="ref_('tstem')" transform="translate(16,2) rotate(30) scale(0.52)" />
-            <use :href="ref_('bud')" transform="translate(-16,0) rotate(-10) scale(0.62)" />
+            <g class="tulip-rise" :style="tulipStyle(160)">
+              <use :href="ref_('tstem')" transform="rotate(14) scale(0.7)" />
+              <use :href="ref_('tstem')" transform="translate(16,2) rotate(30) scale(0.52)" />
+              <use :href="ref_('bud')" transform="translate(-16,0) rotate(-10) scale(0.62)" />
+            </g>
           </g>
         </template>
       </g>
@@ -165,29 +232,96 @@ const ref_ = (name: string) => `#${uid}-${name}`
 </template>
 
 <style scoped>
-.arch-reveal {
+/* Nothing here sets a hidden or collapsed state outside the media query, so a
+   visitor with reduced motion gets the finished garland, drawn and full size. */
+
+.sprout {
   transform-box: fill-box;
-  transform-origin: 50% 60%;
+}
+
+/* leaves grow from the stem they hang off; blooms open from their own middle */
+.sprout-leaf {
+  transform-origin: 50% 100%;
+}
+
+.sprout-bloom {
+  transform-origin: 50% 50%;
+}
+
+.tulip-rise {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .arch-reveal {
-    animation: arch-bloom-in 1.5s cubic-bezier(0.22, 1, 0.36, 1) 0.4s both;
+  .floral-arch-photo {
+    animation: photo-fade 1100ms ease-out both;
+  }
+
+  .vine {
+    stroke-dasharray: 100;
+    animation: vine-draw 1250ms cubic-bezier(0.33, 0.9, 0.4, 1) 550ms both;
+  }
+
+  .sprout {
+    animation: sprout 900ms cubic-bezier(0.16, 0.85, 0.35, 1) var(--d) both;
+  }
+
+  .tulip-rise {
+    animation: tulip-rise 1700ms cubic-bezier(0.16, 0.85, 0.35, 1) var(--d) both;
   }
 }
 
-@keyframes arch-bloom-in {
-  0% {
+@keyframes photo-fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes vine-draw {
+  from {
+    stroke-dashoffset: 100;
+  }
+
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes sprout {
+  from {
     transform: scale(0);
     opacity: 0;
   }
 
-  62% {
-    transform: scale(1.08);
+  to {
+    transform: scale(var(--s));
+    opacity: 1;
+  }
+}
+
+/* Rises from the ground and sways upright, the way a stem settles. Scales on both
+   axes: scaling height alone reads as the stem unfolding rather than growing. */
+@keyframes tulip-rise {
+  0% {
+    transform: scale(0) rotate(-3deg);
+    opacity: 0;
+  }
+
+  45% {
+    opacity: 1;
+  }
+
+  70% {
+    transform: scale(1) rotate(2deg);
   }
 
   100% {
-    transform: scale(1);
+    transform: scale(1) rotate(0deg);
     opacity: 1;
   }
 }

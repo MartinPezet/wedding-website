@@ -1,10 +1,15 @@
 {
   "hotels": [
     {
-      "name": "The Willow Inn",
-      "description": "Cosy village inn a short stroll from the venue. Mention the wedding for a group rate.",
-      "distance": "5 min walk from the venue",
-      "url": "https://example.com/willow-inn"
+      "name": "St Audries Park — stay with us",
+      "description": "We would love you to stay at the venue itself. We are block-booking rooms for the night before and the night of the wedding at around £200 per room per night, with dinner and breakfast included. Tell us on the save-the-date form if you are interested and we will make sure we reserve enough.",
+      "distance": "At the venue",
+      "url": "https://www.audries-park.co.uk/"
+    },
+    {
+      "name": "The Windmill Inn",
+      "description": "Our first choice if you would rather not stay at the venue. Mention the wedding when you book.",
+      "url": "https://www.the-windmill.co.uk/"
     },
     {
       "name": "Placeholder Manor Hotel",
@@ -22,7 +27,7 @@
   "transport": [
     {
       "name": "By train",
-      "description": "Placeholder Station is the nearest stop, 10 minutes from the venue by taxi. Trains run hourly from the city.",
+      "description": "Taunton is the nearest mainline station, about half an hour from the venue by taxi (placeholder — exact times to confirm).",
       "url": "https://www.nationalrail.co.uk"
     },
     {
@@ -31,8 +36,8 @@
     },
     {
       "name": "By car",
-      "description": "The venue is 5 minutes from junction 12. Follow signs for Placeholder Village, then Willow Lane."
+      "description": "St Audries Park is on the A39 at West Quantoxhead, signposted from the main road. Postcode TA4 4DS for sat-nav."
     }
   ],
-  "parking": "Free parking is available in the field beside the venue. Cars may be left overnight but must be collected by 10am the next morning."
+  "parking": "Free parking is available at the venue. Cars may be left overnight but must be collected by 10am the next morning."
 }

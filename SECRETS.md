@@ -68,3 +68,11 @@ Rotating any value = update the GitHub secret; the next deploy's
 - **BACKUP_SECRET / passwords / session secret**: generate a new value, update
   the secret, deploy. Rotating `NUXT_SESSION_PASSWORD` logs everyone out — harmless.
 - **GitHub PAT**: regenerate in GitHub settings, update `AMPLIFY_GITHUB_PAT`.
+
+## What the backup dump contains
+
+`GET /api/admin/backup` returns every table, including `save_the_date_responses` —
+guests' **home postal addresses** and phone numbers, collected by the public
+save-the-date form. Backup artefacts are personal data: keep the S3 bucket
+private, don't copy dumps into shared drives or tickets, and delete local copies
+when you're done with them. The venue export deliberately excludes this sheet.

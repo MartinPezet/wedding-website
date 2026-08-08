@@ -9,13 +9,14 @@ useSeoMeta({
 
 <template>
   <section class="pt-12 sm:pt-24">
-    <FloralHeading eyebrow="Good to know"
+    <FloralHeading v-reveal.focal eyebrow="Good to know"
       >Questions &amp; Answers</FloralHeading
     >
     <dl class="mt-12 space-y-8">
       <div
         v-for="entry in faq"
         :key="entry.question"
+        v-reveal
         class="rounded-3xl bg-blush px-6 py-6"
       >
         <dt class="font-display text-lg text-petal-deep">

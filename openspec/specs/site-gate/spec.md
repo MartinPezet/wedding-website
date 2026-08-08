@@ -49,3 +49,18 @@ A URL carrying a valid party token SHALL authenticate the visitor without a pass
 #### Scenario: Token matches regardless of letter case
 - **WHEN** a visitor manually types a valid party token with different letter casing than it was generated in
 - **THEN** they are granted a session and identified exactly as if the casing matched
+
+### Requirement: Gated visitors are offered no navigation
+While a visitor has no session, the site chrome SHALL offer no navigation to gated pages: the nav links, the mobile menu control, and the home link on the site header SHALL all be withheld, so the only route onward is through the password gate. Once a session exists the full navigation SHALL be restored. This is presentation only — route protection remains enforced independently.
+
+#### Scenario: No navigation before the gate
+- **WHEN** a visitor without a session is shown the gate page
+- **THEN** the header offers no navigation links, no menu control, and no link to the home page
+
+#### Scenario: Navigation returns after sign-in
+- **WHEN** a visitor with a valid session views any gated page
+- **THEN** the full site navigation is shown
+
+#### Scenario: Hiding navigation is not the access control
+- **WHEN** a visitor without a session requests a gated route directly
+- **THEN** they are redirected to the gate regardless of whether any link to it was rendered

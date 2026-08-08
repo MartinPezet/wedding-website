@@ -89,6 +89,23 @@ const mixedSeed = async (db: Db) => {
   ], { responded: true, songRequest: 'Dancing Queen', noteToCouple: 'Congrats!' })
   await seedParty(db, 'The Nopes', [{ name: 'Nia Nope', phone: '+447700123456', attending: false }], { responded: true })
   await seedParty(db, 'The Ghosts', [{ name: 'Gil Ghost' }], {})
+  await seedResponse(db, {})
+}
+
+const seedResponse = async (db: Db, over: Record<string, unknown>) => {
+  const { saveResponse } = await import('../../server/utils/save-the-date')
+  const result = await saveResponse(db, {
+    name: 'The Windsors',
+    phone: '07911 123456',
+    addressLine1: '12 Orchard Lane',
+    addressLine2: 'Nether Stowey',
+    city: 'Bridgwater',
+    postcode: 'TA5 1AA',
+    country: 'United Kingdom',
+    stayNightOf: true,
+    ...over,
+  })
+  expect(result.ok).toBe(true)
 }
 
 const loadWorkbook = async (buffer: Uint8Array) => {
@@ -215,6 +232,50 @@ describeFeature(feature, (f) => {
     })
   })
 
+  f.Rule('Save-the-date responses in the full export', (r) => {
+    r.RuleScenario('Responses sheet in full export', (s) => {
+      let db: Db
+      let workbook: ExcelJS.Workbook
+      s.Given('stored save-the-date responses', async () => {
+        db = await freshDb()
+        await seedResponse(db, {})
+        await seedResponse(db, { phone: '07912 345678', name: 'The Beaumonts', stayNightBefore: true, stayNightOf: false })
+      })
+      s.When('the admin requests the full export', async () => {
+        const { buildFullWorkbook } = await exportUtil()
+        workbook = await loadWorkbook(await buildFullWorkbook(db))
+      })
+      s.Then('the workbook contains a save-the-date sheet with one row per response and all address, phone, and room-night columns populated', () => {
+        const text = sheetText(workbook, 'Save the Date')
+        for (const value of ['The Windsors', 'The Beaumonts', '+447911123456', '+447912345678',
+          '12 Orchard Lane', 'Nether Stowey', 'Bridgwater', 'TA5 1AA', 'United Kingdom']) {
+          expect(text).toContain(value)
+        }
+        expect(workbook.getWorksheet('Save the Date')!.rowCount).toBe(3)
+      })
+    })
+
+    r.RuleScenario('Venue pack unaffected', (s) => {
+      let db: Db
+      let workbook: ExcelJS.Workbook
+      s.Given('stored save-the-date responses', async () => {
+        db = await freshDb()
+        await mixedSeed(db)
+      })
+      s.When('the venue workbook is generated', async () => {
+        const { buildVenueWorkbook } = await exportUtil()
+        workbook = await loadWorkbook(await buildVenueWorkbook(db))
+      })
+      s.Then('it contains no save-the-date sheet and no postal addresses or phone numbers', () => {
+        expect(workbook.getWorksheet('Save the Date')).toBeUndefined()
+        const cells = allCellText(workbook).join(' | ')
+        for (const leaked of ['12 Orchard Lane', 'TA5 1AA', '+447911123456']) {
+          expect(cells).not.toContain(leaked)
+        }
+      })
+    })
+  })
+
   f.Rule('JSON backup endpoint', (r) => {
     type Handler = (event: Record<string, unknown>) => Promise<unknown>
     const guard = async (): Promise<Handler> =>
@@ -238,11 +299,12 @@ describeFeature(feature, (f) => {
         await (await guard())(event)
         dump = await (await backupHandler())(event) as typeof dump
       })
-      s.Then('a JSON dump of all tables is returned', () => {
+      s.Then('a JSON dump of all tables is returned, including the save-the-date responses table', () => {
         expect(dump.parties).toHaveLength(3)
         expect(dump.guests).toHaveLength(4)
         expect(Array.isArray(dump.settings)).toBe(true)
         expect(dump.parties[0]).toMatchObject({ name: expect.any(String), token: expect.any(String) })
+        expect(dump.saveTheDateResponses).toMatchObject([{ name: 'The Windsors', phone: '+447911123456' }])
       })
     })
 
@@ -262,7 +324,7 @@ describeFeature(feature, (f) => {
       let source: Db
       let dump: unknown
       let target: Db
-      s.Given('a dump file', async () => {
+      s.Given('a dump file containing save-the-date responses', async () => {
         source = await freshDb()
         await mixedSeed(source)
         const { settings } = await import('../../server/db/schema')
@@ -277,12 +339,13 @@ describeFeature(feature, (f) => {
         // the standalone script wraps the same restore
         expect(readFileSync('scripts/restore.mjs', 'utf8')).toContain('restoreDatabase')
       })
-      s.Then('the database contents match the dump', async () => {
+      s.Then('the database contents match the dump, save-the-date responses included', async () => {
         const { dumpDatabase } = await backupUtil()
         const roundTripped = await dumpDatabase(target)
         expect(roundTripped).toEqual(dump)
         const restoredParties = (roundTripped as { parties: { name: string }[] }).parties
         expect(restoredParties.map(party => party.name).sort()).toEqual(['The Fulls', 'The Ghosts', 'The Nopes'])
+        expect((roundTripped as { saveTheDateResponses: unknown[] }).saveTheDateResponses).toHaveLength(1)
       })
     })
   })

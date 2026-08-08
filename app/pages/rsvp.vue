@@ -123,10 +123,10 @@ const fieldClass = 'rounded-2xl border border-leaf/40 bg-white/70 px-4 py-3 text
 
 <template>
   <section class="pt-12 text-center sm:pt-20">
-    <FloralHeading eyebrow="Répondez s'il vous plaît">RSVP</FloralHeading>
+    <FloralHeading v-reveal.focal eyebrow="Répondez s'il vous plaît">RSVP</FloralHeading>
 
     <!-- no party context: point back to the invite -->
-    <div v-if="!data?.party" class="mx-auto mt-8 max-w-md">
+    <div v-if="!data?.party" v-reveal class="mx-auto mt-8 max-w-md">
       <p class="text-leaf-deep">
         To reply, please open the QR code or link printed on your invitation —
         it brings you straight to your party's RSVP.
@@ -137,7 +137,7 @@ const fieldClass = 'rounded-2xl border border-leaf/40 bg-white/70 px-4 py-3 text
     </div>
 
     <!-- deadline passed: read-only summary -->
-    <div v-else-if="data.locked" class="mx-auto mt-8 max-w-md">
+    <div v-else-if="data.locked" v-reveal class="mx-auto mt-8 max-w-md">
       <p class="text-leaf-deep">The RSVP deadline has passed, so answers are locked in.</p>
       <ul class="mt-6 space-y-3 text-left">
         <li
@@ -156,7 +156,7 @@ const fieldClass = 'rounded-2xl border border-leaf/40 bg-white/70 px-4 py-3 text
     </div>
 
     <!-- confirmation -->
-    <div v-else-if="submitted" class="mx-auto mt-8 max-w-md">
+    <div v-else-if="submitted" v-reveal class="mx-auto mt-8 max-w-md">
       <FloralDivider class="mx-auto w-40" />
       <template v-if="anyAttending">
         <h2 class="mt-6 font-display text-3xl text-ink">We can't wait to see you!</h2>
@@ -184,7 +184,7 @@ const fieldClass = 'rounded-2xl border border-leaf/40 bg-white/70 px-4 py-3 text
 
     <!-- the form -->
     <form v-else class="mx-auto mt-8 max-w-md text-left" @submit.prevent="submit">
-      <p class="text-center text-leaf-deep">
+      <p v-reveal class="text-center text-leaf-deep">
         Hello, <span class="font-display text-ink">{{ data.party.name }}</span>!
         <template v-if="deadlineLabel"> Please reply by {{ deadlineLabel }}.</template>
       </p>
@@ -192,6 +192,7 @@ const fieldClass = 'rounded-2xl border border-leaf/40 bg-white/70 px-4 py-3 text
       <fieldset
         v-for="guest in guests"
         :key="guest.id"
+        v-reveal
         class="mt-6 rounded-2xl border border-leaf/30 bg-white/60 px-5 py-4"
       >
         <legend class="px-2 font-display text-lg text-ink">{{ guest.name }}</legend>

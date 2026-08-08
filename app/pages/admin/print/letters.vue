@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { schedule, venue } from "#shared/content";
 import { qrSvg } from "#shared/utils/qr";
 
 definePageMeta({ layout: "print" });
@@ -41,15 +42,20 @@ async function buildLetters() {
 }
 await buildLetters();
 
-// ponytail: placeholder invite copy + names/date/venue — user supplies final
-// wording during content pass. [[content-placeholders-pending]]
+// ponytail: placeholder invite copy — user supplies final wording during the
+// content pass. Date and venue come from content. [[content-placeholders-pending]]
 const couple = "Ciera & Martin";
 const inviteCopy =
   "Together with our families, we would be delighted for you to join us " +
   "as we celebrate our wedding. Please let us know if you can make it by scanning " +
   "the code below — it takes you straight to your personal RSVP.";
-const dateLine = "Saturday 17th January 2027";
-const venueLine = "Huntsham Court, Devon";
+const dateLine = new Date(schedule[0]!.start).toLocaleDateString("en-GB", {
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+});
+const venueLine = [venue.name, venue.county].join(", ");
 </script>
 
 <template>

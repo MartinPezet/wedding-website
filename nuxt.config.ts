@@ -18,6 +18,18 @@ export default defineNuxtConfig({
         { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon.png' },
         { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
       ],
+      script: [
+        // Arms the staged page reveal BEFORE the first paint, so sections that
+        // start hidden are never painted visible first (that flash is what a
+        // hydration-time hide looks like). No JS, no class, nothing hidden.
+        // If hydration never runs, the gate lifts itself so content can't be lost.
+        {
+          innerHTML: 'document.documentElement.classList.add("reveal-armed");'
+            + 'setTimeout(function(){if(!window.__revealMounted)'
+            + 'document.documentElement.classList.remove("reveal-armed")},4000)',
+          tagPosition: 'head',
+        },
+      ],
     },
   },
   css: ['~/assets/css/main.css', '~/assets/css/print.css'],
