@@ -512,5 +512,115 @@ describeFeature(feature, (f) => {
         }
       })
     })
+
+    r.RuleScenario('Admin corrects a response', (s) => {
+      let db: Db
+      let id = 0
+      s.Given('a stored save-the-date response', async () => {
+        db = await freshDb()
+        await seedResponse(db, { phone: '07911 123456' })
+        const [stored] = await (await import('../../server/utils/save-the-date')).listResponses(db)
+        id = stored!.id
+      })
+      s.When('the admin edits its name, phone, address, or room-night flags and saves', async () => {
+        const { updateResponse } = await import('../../server/utils/save-the-date')
+        const result = await updateResponse(db, id, {
+          name: 'The Windsors-Smith',
+          phone: '07911 123456',
+          addressLine1: '14 Orchard Lane',
+          city: 'Bridgwater',
+          postcode: 'TA5 1AA',
+          country: 'United Kingdom',
+          stayNightBefore: true,
+          stayNightOf: true,
+        })
+        expect(result).toEqual({ ok: true })
+      })
+      s.Then('the change is persisted and the page reflects the new values and totals', async () => {
+        const { listResponses } = await import('../../server/utils/save-the-date')
+        const [stored] = await listResponses(db)
+        expect(stored!.name).toBe('The Windsors-Smith')
+        expect(stored!.addressLine1).toBe('14 Orchard Lane')
+        expect(stored!.stayNightBefore).toBe(true)
+        expect(stored!.stayNightOf).toBe(true)
+        const wrapper = await mountResponsesPage(db)
+        await flush()
+        expect(wrapper.text()).toContain('The Windsors-Smith')
+      })
+    })
+
+    r.RuleScenario('Admin rejects invalid edit', (s) => {
+      let db: Db
+      let id = 0
+      let before: Record<string, unknown>
+      s.Given('a stored save-the-date response', async () => {
+        db = await freshDb()
+        await seedResponse(db, { phone: '07911 123456' })
+        const { listResponses } = await import('../../server/utils/save-the-date')
+        const [stored] = await listResponses(db)
+        id = stored!.id
+        before = stored!
+      })
+      s.When('the admin submits an edit missing a required field or with an invalid phone number', async () => {
+        const { updateResponse } = await import('../../server/utils/save-the-date')
+        const result = await updateResponse(db, id, {
+          name: '',
+          phone: '07911 123456',
+          addressLine1: '12 Orchard Lane',
+          city: 'Bridgwater',
+          postcode: 'TA5 1AA',
+          country: 'United Kingdom',
+        })
+        expect(result.ok).toBe(false)
+      })
+      s.Then('the change is rejected, nothing is stored, and the response keeps its previous values', async () => {
+        const { listResponses } = await import('../../server/utils/save-the-date')
+        const [stored] = await listResponses(db)
+        expect(stored!.name).toBe(before.name)
+        expect(stored!.addressLine1).toBe(before.addressLine1)
+      })
+    })
+
+    r.RuleScenario('Admin deletes a response', (s) => {
+      let db: Db
+      let id = 0
+      s.Given('a stored save-the-date response', async () => {
+        db = await freshDb()
+        await seedResponse(db, { phone: '07911 123456' })
+        const { listResponses } = await import('../../server/utils/save-the-date')
+        const [stored] = await listResponses(db)
+        id = stored!.id
+      })
+      s.When('the admin confirms deletion of the response', async () => {
+        const { deleteResponse } = await import('../../server/utils/save-the-date')
+        await deleteResponse(db, id)
+      })
+      s.Then('the response no longer appears on the page and interest totals no longer include it', async () => {
+        const { listResponses } = await import('../../server/utils/save-the-date')
+        expect(await listResponses(db)).toHaveLength(0)
+        const wrapper = await mountResponsesPage(db)
+        await flush()
+        expect(wrapper.text()).not.toContain('The Windsors')
+      })
+    })
+
+    r.RuleScenario('Unauthenticated edit or delete blocked', (s) => {
+      let outcome: { statusCode?: number } | undefined
+      s.Given('a visitor without an admin session', () => {})
+      s.When('they post an edit or delete request directly to the save-the-date response endpoint', async () => {
+        vi.stubGlobal('defineEventHandler', (handler: unknown) => handler)
+        const guard = (await import('../../server/middleware/admin-guard')).default as unknown as
+          (event: unknown) => Promise<unknown>
+        vi.stubGlobal('getUserSession', async () => null)
+        vi.stubGlobal('getHeader', () => '')
+        vi.stubGlobal('useRuntimeConfig', () => ({ backupSecret: '' }))
+        outcome = await guard({ path: '/api/admin/save-the-date/1' })
+          .then(() => undefined, (error: { statusCode?: number }) => error)
+      })
+      s.Then('access is refused and no data is changed', () => {
+        expect(outcome?.statusCode).toBe(401)
+        vi.unstubAllGlobals()
+      })
+    })
   })
 })

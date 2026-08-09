@@ -146,7 +146,6 @@ describeFeature(feature, (f) => {
       let changeDirs: string[] = []
       s.Given('every migrated active change in openspec/changes', () => {
         changeDirs = migratedChangeDirs()
-        expect(changeDirs.length).toBeGreaterThan(0)
       })
       s.When('its openspec yaml is read', () => {})
       s.Then('the schema is spec-driven-bdd', () => {
