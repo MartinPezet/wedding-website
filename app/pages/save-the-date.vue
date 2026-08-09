@@ -189,7 +189,7 @@ useSeoMeta({
               placeholder="e.g. Ciera &amp; Martin Forry-Pezet"
               class="mt-1"
               :class="fieldClass"
-            >
+            />
           </label>
 
           <label v-reveal class="mt-4 block text-sm text-leaf-deep">
@@ -204,7 +204,7 @@ useSeoMeta({
               placeholder="e.g. 07700 000000"
               class="mt-1"
               :class="fieldClass"
-            >
+            />
           </label>
 
           <label v-reveal class="mt-4 block text-sm text-leaf-deep">
@@ -218,7 +218,7 @@ useSeoMeta({
               placeholder="House and street"
               class="mt-1"
               :class="fieldClass"
-            >
+            />
           </label>
 
           <label v-reveal class="mt-2 block text-sm text-leaf-deep">
@@ -230,7 +230,7 @@ useSeoMeta({
               autocomplete="address-line2"
               placeholder="Village or area (optional)"
               :class="fieldClass"
-            >
+            />
           </label>
 
           <div v-reveal class="mt-4 flex flex-col gap-4 sm:flex-row">
@@ -245,7 +245,7 @@ useSeoMeta({
                 class="mt-1"
                 placeholder="e.g. Taunton"
                 :class="fieldClass"
-              >
+              />
             </label>
             <label class="block text-sm text-leaf-deep sm:w-40">
               Postcode<span class="text-petal-deep">*</span>
@@ -258,7 +258,7 @@ useSeoMeta({
                 class="mt-1"
                 placeholder="e.g. TA4 4DS"
                 :class="fieldClass"
-              >
+              />
             </label>
           </div>
 
@@ -272,7 +272,7 @@ useSeoMeta({
               required
               class="mt-1"
               :class="fieldClass"
-            >
+            />
           </label>
 
           <fieldset
@@ -299,7 +299,7 @@ useSeoMeta({
                 type="checkbox"
                 name="stayNightBefore"
                 class="mt-0.5 size-5 shrink-0 rounded border-leaf/40 accent-petal"
-              >
+              />
               <span
                 >The night before — {{ nightLabel(-1) }}
                 <span class="block text-leaf-deep/70"
@@ -315,7 +315,7 @@ useSeoMeta({
                 type="checkbox"
                 name="stayNightOf"
                 class="mt-0.5 size-5 shrink-0 rounded border-leaf/40 accent-petal"
-              >
+              />
               <span
                 >The night of the wedding — {{ nightLabel(0) }}
                 <span class="block text-leaf-deep/70"
@@ -335,7 +335,7 @@ useSeoMeta({
             :disabled="pending"
             class="mt-6 w-full rounded-full bg-petal px-6 py-3 font-display text-lg text-white transition hover:bg-petal-deep disabled:opacity-60"
           >
-            {{ pending ? "Sending…" : "Send our details" }}
+            {{ pending ? "Sending…" : "Send your details" }}
           </button>
         </form>
       </section>
