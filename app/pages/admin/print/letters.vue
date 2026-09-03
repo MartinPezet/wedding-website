@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { schedule, venue } from "#shared/content";
 import { qrSvg } from "#shared/utils/qr";
 
 definePageMeta({ layout: "print" });
@@ -11,6 +10,9 @@ interface Party {
   token: string;
 }
 const { data } = await useFetch<{ parties: Party[] }>("/api/admin/parties");
+const { data: settings } = await useFetch<{ rsvpDeadline?: string }>(
+  "/api/admin/settings",
+);
 const route = useRoute();
 
 // absolute RSVP URL; origin resolves on the client (this is a browser-only
@@ -46,68 +48,77 @@ await buildLetters();
 // content pass. Date and venue come from content. [[content-placeholders-pending]]
 const couple = "Ciera & Martin";
 const inviteCopy =
-  "Together with our families, we would be delighted for you to join us " +
+  "We would be delighted for you to join us " +
   "as we celebrate our wedding. Please let us know if you can make it by scanning " +
-  "the code below — it takes you straight to your personal RSVP.";
-const dateLine = new Date(schedule[0]!.start).toLocaleDateString("en-GB", {
-  weekday: "long",
-  day: "numeric",
-  month: "long",
-  year: "numeric",
+  "the QR code below";
+// RSVP deadline set by the admin in settings; blank until one is saved
+const dateLine = computed(() => {
+  const deadline = settings.value?.rsvpDeadline;
+  if (!deadline) return "";
+  return new Date(deadline).toLocaleDateString("en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 });
-const venueLine = [venue.name, venue.county].join(", ");
 </script>
 
 <template>
   <div>
     <template v-for="entry in letters" :key="entry.party.id">
       <PrintPage size="a5">
-      <template #bleed>
-        <FloralHeader />
-        <FloralTulipCorner class="absolute bottom-0 left-0 w-24" />
-        <FloralTulipCorner
-          class="absolute bottom-0 right-0 w-24 -scale-x-100"
-        />
-        <FloralDivider
-          class="absolute bottom-12 right-1/2 translate-x-1/2 w-36"
-        />
-      </template>
-      <article
-        data-letter
-        class="flex min-h-full flex-col items-center text-center"
-      >
-        <div class="flex w-full flex-col items-center">
-          <p class="mt-10 text-xs uppercase tracking-[0.35em] text-petal-deep">
-            You're invited
-          </p>
-          <h1 class="mt-2 font-display text-4xl italic text-ink">
-            {{ couple }}
-          </h1>
-          <FloralDivider class="mx-auto mt-3 w-36" />
-
-          <p class="mt-8 font-display text-lg text-ink">
-            Dear {{ entry.party.name }},
-          </p>
-          <p class="mt-3 max-w-[110mm] text-sm leading-relaxed text-ink/80">
-            {{ inviteCopy }}
-          </p>
-          <p class="mt-5 text-sm text-ink/80">
-            {{ dateLine }}<br >{{ venueLine }}
-          </p>
-
-          <div class="mt-8">
-            <!-- eslint-disable-next-line vue/no-v-html -- QR SVG generated locally by qrSvg -->
-            <div data-qr class="mx-auto h-[35mm] w-[35mm]" v-html="entry.qr" />
-            <p class="mt-3 text-xs text-ink/60">Scan to RSVP, or visit</p>
+        <template #bleed>
+          <FloralHeader />
+          <FloralTulipCorner class="absolute bottom-0 left-0 w-24" />
+          <FloralTulipCorner
+            class="absolute bottom-0 right-0 w-24 -scale-x-100"
+          />
+          <FloralDivider
+            class="absolute bottom-12 right-1/2 translate-x-1/2 w-36"
+          />
+        </template>
+        <article
+          data-letter
+          class="flex min-h-full flex-col items-center text-center"
+        >
+          <div class="flex w-full flex-col items-center">
             <p
-              data-fallback
-              class="break-all text-xs font-medium text-petal-deep"
+              class="mt-10 text-xs uppercase tracking-[0.35em] text-petal-deep"
             >
-              {{ entry.url }}
+              You're invited
             </p>
+            <h1 class="mt-2 font-display text-4xl italic text-ink">
+              {{ couple }}
+            </h1>
+            <FloralDivider class="mx-auto mt-3 w-36" />
+
+            <p class="mt-8 font-display text-lg text-ink">
+              Dear {{ entry.party.name }},
+            </p>
+            <p class="mt-3 max-w-[110mm] text-sm leading-relaxed text-ink/80">
+              {{ inviteCopy
+              }}<template v-if="dateLine"> by {{ dateLine }}</template
+              >.
+            </p>
+
+            <div class="mt-8">
+              <!-- eslint-disable-next-line vue/no-v-html -- QR SVG generated locally by qrSvg -->
+              <div
+                data-qr
+                class="mx-auto h-[35mm] w-[35mm]"
+                v-html="entry.qr"
+              />
+              <p class="mt-3 text-xs text-ink/60">Scan to RSVP, or visit</p>
+              <p
+                data-fallback
+                class="break-all text-xs font-medium text-petal-deep"
+              >
+                {{ entry.url }}
+              </p>
+            </div>
           </div>
-        </div>
-      </article>
+        </article>
       </PrintPage>
       <PrintLetterBack />
     </template>
