@@ -1,10 +1,4 @@
-# print-materials
-
-## Purpose
-
-Admin-only printable outputs in the site's floral style: RSVP invite letters with personal QR codes, large-format seating chart, place cards, and on-the-day handouts — all previewable on screen and printed to PDF.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Shared print layer in site style
 Printable outputs SHALL use a shared print stylesheet with correct page sizing, exact colour printing, and the site's floral design tokens, previewable on screen before printing. The on-screen preview SHALL paint the cream page ground so a sheet reads as paper, but a printed sheet SHALL carry no page background of its own: only ink reaches the page and the card stock supplies the ground.
@@ -12,13 +6,6 @@ Printable outputs SHALL use a shared print stylesheet with correct page sizing, 
 #### Scenario: Print preview matches paper
 - **WHEN** the admin opens any print route and prints to PDF
 - **THEN** page size, ink colours, and floral styling render as previewed with correct page breaks, and the sheet's cream ground is left to the paper rather than printed
-
-### Requirement: Print routes are admin-only
-All print routes SHALL require an admin session — invite letters contain party tokens.
-
-#### Scenario: Unauthenticated access blocked
-- **WHEN** a print route is requested without an admin session
-- **THEN** access is denied
 
 ### Requirement: RSVP letters with personal QR codes
 The system SHALL render a single-sided A6 landscape (148 × 105 mm) RSVP letter per party: party name(s), invite copy, floral styling, a scannable QR code encoding that party's personal RSVP URL, and a short fallback URL. The couple's names SHALL use the site header's display style (light-weight italic display face with the ampersand in `--color-petal`) at the letter's existing size, with the header floral divider centred directly beneath them. The eyebrow, names, and divider SHALL be centred over a left column holding the left-aligned greeting and invite copy; the QR code with its fallback URL SHALL occupy a right column, so the letter fits one A6 side without reducing any type size from the previous A5 letter.
@@ -68,27 +55,6 @@ Each printed RSVP invite letter SHALL show a centered floral divider at the bott
 - **WHEN** an invite letter renders
 - **THEN** a centered divider appears at the bottom of that letter, between the column content and the letter's bottom edge
 
-### Requirement: Large-format seating chart print
-The system SHALL render the persisted seating assignments as a large-format (A2, optionally A1) printable chart in site style, listing each table with the guests seated at it.
-
-#### Scenario: Chart lists each table's guests
-- **WHEN** the admin prints the seating chart
-- **THEN** each table is listed with its seated guests, matching the seating editor's assignments
-
-### Requirement: Place cards
-The system SHALL render place cards on A4 sheets with fold lines and crop marks: guest name and a meal marker per card, ordered by table and seat.
-
-#### Scenario: Place card sheet
-- **WHEN** the admin prints place cards
-- **THEN** each attending seated guest has a card with name and meal marker, in table/seat order, with fold and crop guides
-
-### Requirement: Day handouts from JSON
-The system SHALL render A5 on-the-day handouts from `handout.json` in site style; content changes SHALL require only a JSON edit.
-
-#### Scenario: Handout content update
-- **WHEN** handout.json is edited and the site redeployed
-- **THEN** the printed handout reflects the new content with no component changes
-
 ### Requirement: Tulip corner art on letters and handout
 The RSVP letter and day handout print pages SHALL carry the same tulip corner art (tulip cups with leafy grass) used in the site footer, rendered from theme tokens so print output matches the site palette. Each RSVP letter SHALL carry one tulip corner in its bottom-right corner and one hydrangea cluster in its top-left corner; the handout keeps tulip corners on both sides.
 
@@ -99,3 +65,13 @@ The RSVP letter and day handout print pages SHALL carry the same tulip corner ar
 #### Scenario: Handout carries tulip corners
 - **WHEN** the day handout print page renders
 - **THEN** the handout page shows the tulip corner art
+
+## REMOVED Requirements
+
+### Requirement: Decorative back page on RSVP invite letters
+**Reason**: Letters are printed on a single-sided printer; a verso cannot be produced.
+**Migration**: `PrintLetterBack.vue` is deleted. The batch view emits two letters per sheet and no other pages. No data or admin action changes.
+
+### Requirement: Letter back floral art follows the arch construction
+**Reason**: Only governed the removed back page.
+**Migration**: None; the component is deleted with the back page.

@@ -8,7 +8,6 @@
 .print-page {
   position: relative;
   box-sizing: border-box;
-  background: var(--color-cream);
   color: var(--color-ink);
   overflow: hidden;
 }
@@ -27,7 +26,10 @@
 .print-page-bleed { position: absolute; inset: 0; overflow: hidden; }
 
 @media screen {
+  /* cream only in the preview — the card stock supplies it on paper, so the
+     sheet prints with no background of its own */
   .print-page {
+    background: var(--color-cream);
     box-shadow: 0 4px 24px rgba(74, 59, 64, 0.15);
     margin: 1rem auto;
   }
