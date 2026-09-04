@@ -58,6 +58,24 @@ mockNuxtImport('useRoute', () => () => ({ query: routeState.query }))
 const authMiddleware = async () =>
   (await import('../../app/middleware/auth.global')).default as unknown as (to: { path: string }) => unknown
 
+// shared letters fixtures; three parties exercise the odd (half-empty) sheet
+const letterParties = [
+  { id: 1, name: 'The Smiths', token: 'tok-smith-abc' },
+  { id: 2, name: 'The Patels', token: 'tok-patel-xyz' },
+  { id: 3, name: 'Alex Jones', token: 'tok-jones-123' },
+]
+const registerParties = () =>
+  registerEndpoint('/api/admin/parties', { method: 'GET', handler: () => ({ parties: letterParties }) })
+
+/** mount the letters print page with query params (sheet / party) applied */
+const mountLetters = async (query: Record<string, string> = {}) => {
+  clearNuxtData()
+  routeState.query = query
+  return await mountSuspended(await printPage('letters'))
+}
+type LettersWrapper = Awaited<ReturnType<typeof mountLetters>>
+const sheetsOf = (wrapper: LettersWrapper) => wrapper.findAll('[data-print-page]')
+
 describeFeature(feature, (f) => {
   // "Shared print layer in site style" is @manual (print fidelity) — skipped
 
@@ -77,6 +95,127 @@ describeFeature(feature, (f) => {
   })
 
   f.Rule('RSVP letters with personal QR codes', (r) => {
+    r.RuleScenario('Batch letter printing', (s) => {
+      let wrapper: LettersWrapper
+      s.Given('multiple parties with tokens', () => {
+        registerParties()
+      })
+      s.When('the letters batch view renders', async () => {
+        wrapper = await mountLetters()
+      })
+      s.Then('it contains one sheet per two parties and no other pages, with one A6 letter per party, each with that party\'s own QR code and fallback URL', () => {
+        expect(sheetsOf(wrapper)).toHaveLength(Math.ceil(letterParties.length / 2))
+        const letters = wrapper.findAll('[data-letter]')
+        expect(letters).toHaveLength(letterParties.length)
+        letters.forEach((letter, index) => {
+          const party = letterParties[index]!
+          expect(letter.text()).toContain(party.name)
+          // QR rendered as inline SVG
+          expect(letter.find('[data-qr] svg').exists()).toBe(true)
+          // fallback URL carries this party's own token
+          expect(letter.find('[data-fallback]').text()).toContain(`?t=${party.token}`)
+        })
+      })
+    })
+
+    r.RuleScenario('Two letters per A5 sheet', (s) => {
+      let wrapper: LettersWrapper
+      s.Given('multiple parties with tokens', () => {
+        registerParties()
+      })
+      s.When('the letters batch view renders with no sheet selected', async () => {
+        wrapper = await mountLetters()
+      })
+      s.Then('every sheet is A5, holds at most two letters with a cut guide between the halves, carries no crop marks, and no sheet is a back page', () => {
+        const sheets = sheetsOf(wrapper)
+        expect(sheets.length).toBeGreaterThan(0)
+        for (const sheet of sheets) {
+          expect(sheet.classes()).toContain('print-page-a5')
+          expect(sheet.findAll('[data-letter]').length).toBeLessThanOrEqual(2)
+          expect(sheet.find('[data-cut]').exists()).toBe(true)
+        }
+        expect(wrapper.find('[data-crop]').exists()).toBe(false)
+        expect(wrapper.find('[data-letter-back]').exists()).toBe(false)
+      })
+    })
+
+    r.RuleScenario('Two letters per A4 sheet with crop marks', (s) => {
+      let wrapper: LettersWrapper
+      let a5Letters: string[] = []
+      s.Given('multiple parties with tokens', () => {
+        registerParties()
+      })
+      s.When('the letters batch view renders with the A4 sheet selected', async () => {
+        // render the default stock first, so the letters can be compared
+        a5Letters = (await mountLetters()).findAll('[data-letter]').map(letter => letter.element.innerHTML)
+        wrapper = await mountLetters({ sheet: 'a4' })
+      })
+      s.Then('every sheet is A4, holds at most two letters, carries crop marks, and the letters are unchanged from the A5 layout', () => {
+        const sheets = sheetsOf(wrapper)
+        expect(sheets.length).toBeGreaterThan(0)
+        for (const sheet of sheets) {
+          expect(sheet.classes()).toContain('print-page-a4')
+          expect(sheet.findAll('[data-letter]').length).toBeLessThanOrEqual(2)
+          expect(sheet.find('[data-crop]').exists()).toBe(true)
+        }
+        expect(wrapper.findAll('[data-letter]').map(letter => letter.element.innerHTML)).toEqual(a5Letters)
+      })
+    })
+
+    r.RuleScenario('Sheet toggle is screen-only', (s) => {
+      let wrapper: LettersWrapper
+      s.Given('multiple parties with tokens', () => {
+        registerParties()
+      })
+      s.When('the letters batch view renders', async () => {
+        wrapper = await mountLetters()
+      })
+      s.Then('it shows an A5 / A4 sheet toggle inside a no-print element', () => {
+        const toggle = wrapper.find('[data-sheet-toggle]')
+        expect(toggle.exists()).toBe(true)
+        expect(toggle.findAll('button').map(button => button.text())).toEqual(['A5', 'A4'])
+        expect(toggle.element.closest('.no-print')).not.toBeNull()
+      })
+    })
+
+    r.RuleScenario('Single-party reprint', (s) => {
+      let wrapper: LettersWrapper
+      s.Given('multiple parties with tokens', () => {
+        registerParties()
+      })
+      s.When('the letters view renders for a single party via the party query parameter', async () => {
+        wrapper = await mountLetters({ party: '1' })
+      })
+      s.Then('exactly one sheet renders, holding that party\'s letter only', () => {
+        expect(sheetsOf(wrapper)).toHaveLength(1)
+        const letters = wrapper.findAll('[data-letter]')
+        expect(letters).toHaveLength(1)
+        expect(letters[0]!.text()).toContain(letterParties[0]!.name)
+      })
+    })
+
+    r.RuleScenario('Names match the site header style', (s) => {
+      let wrapper: LettersWrapper
+      s.Given('multiple parties with tokens', () => {
+        registerParties()
+      })
+      s.When('the letters batch view renders', async () => {
+        wrapper = await mountLetters()
+      })
+      s.Then('each letter\'s names heading is light italic display type with a petal-coloured ampersand, and a centred header divider immediately follows it', () => {
+        const letters = wrapper.findAll('[data-letter]')
+        expect(letters.length).toBeGreaterThan(0)
+        for (const letter of letters) {
+          const heading = letter.find('h1')
+          expect(heading.classes()).toEqual(expect.arrayContaining(['font-display', 'font-light', 'italic']))
+          expect(heading.find('span.text-petal').text()).toBe('&')
+          const divider = heading.element.nextElementSibling
+          expect(divider?.hasAttribute('data-letter-header-divider')).toBe(true)
+          expect(divider?.classList.contains('mx-auto')).toBe(true)
+        }
+      })
+    })
+
     r.RuleScenario('QR code matches letter styling', (s) => {
       let svg = ''
       s.Given('an invite letter for a party', () => {})
@@ -92,35 +231,6 @@ describeFeature(feature, (f) => {
         const dataGroup = svg.match(/<g data-qr-data[^>]*>[\s\S]*?<\/g>/)?.[0] ?? ''
         expect(finderGroup).not.toContain('rx=')
         expect(dataGroup).toMatch(/rx="0\.\d+"/)
-      })
-    })
-
-    r.RuleScenario('Batch letter printing', (s) => {
-      const parties = [
-        { id: 1, name: 'The Smiths', token: 'tok-smith-abc' },
-        { id: 2, name: 'The Patels', token: 'tok-patel-xyz' },
-        { id: 3, name: 'Alex Jones', token: 'tok-jones-123' },
-      ]
-      let wrapper: Awaited<ReturnType<typeof mountSuspended>>
-      s.Given('multiple parties with tokens', () => {
-        registerEndpoint('/api/admin/parties', { method: 'GET', handler: () => ({ parties }) })
-      })
-      s.When('the letters batch view renders', async () => {
-        clearNuxtData()
-        wrapper = await mountSuspended(await printPage('letters'))
-      })
-      s.Then('it contains one A5 letter per party, each with that party\'s own QR code and fallback URL', () => {
-        const letters = wrapper.findAll('[data-letter]')
-        expect(letters).toHaveLength(parties.length)
-        letters.forEach((letter, index) => {
-          const party = parties[index]!
-          expect(letter.text()).toContain(party.name)
-          // QR rendered as inline SVG
-          expect(letter.find('[data-qr] svg').exists()).toBe(true)
-          // fallback URL carries this party's own token
-          const fallback = letter.find('[data-fallback]').text()
-          expect(fallback).toContain(`?t=${party.token}`)
-        })
       })
     })
   })
@@ -215,15 +325,16 @@ describeFeature(feature, (f) => {
   })
 
   f.Rule('Tulip corner art on letters and handout', (r) => {
-    // source-level: the corner art component is placed in each template
+    // source-level: the corner art components are placed in each template
     r.RuleScenario('Letters carry tulip corners', (s) => {
       let src = ''
       s.Given('the RSVP letters print page', () => {
         src = readFileSync('app/pages/admin/print/letters.vue', 'utf8')
       })
       s.When('its markup is inspected', () => {})
-      s.Then('the tulip corner art is placed on each letter page', () => {
+      s.Then('each letter places the tulip corner art bottom-right and a hydrangea cluster top-left', () => {
         expect(src).toContain('FloralTulipCorner')
+        expect(src).toContain('FloralCluster')
       })
     })
 
@@ -239,145 +350,21 @@ describeFeature(feature, (f) => {
     })
   })
 
-  f.Rule('Decorative back page on RSVP invite letters', (r) => {
-    const parties = [
-      { id: 1, name: 'The Smiths', token: 'tok-smith-abc' },
-      { id: 2, name: 'The Patels', token: 'tok-patel-xyz' },
-    ]
-    /** mount the letters page and return front/back page wrappers */
-    const mountLetters = async (query: Record<string, string> = {}) => {
-      clearNuxtData()
-      routeState.query = query
-      const wrapper = await mountSuspended(await printPage('letters'))
-      return {
-        wrapper,
-        pages: wrapper.findAll('[data-print-page]'),
-        backs: wrapper.findAll('[data-letter-back]'),
-      }
-    }
-    type Mounted = Awaited<ReturnType<typeof mountLetters>>
-
-    r.RuleScenario('Every letter is followed by a back page', (s) => {
-      let mounted: Mounted
-      s.Given('multiple parties with tokens', () => {
-        registerEndpoint('/api/admin/parties', { method: 'GET', handler: () => ({ parties }) })
-      })
-      s.When('the letters batch view renders', async () => {
-        mounted = await mountLetters()
-      })
-      s.Then('each letter is followed by an A5 back page and the page count is twice the number of parties', () => {
-        expect(mounted.pages).toHaveLength(parties.length * 2)
-        mounted.pages.forEach((page, index) => {
-          // even pages are fronts, odd pages are backs
-          expect(page.find(index % 2 === 0 ? '[data-letter]' : '[data-letter-back]').exists()).toBe(true)
-          expect(page.classes()).toContain('print-page-a5')
-        })
-      })
-    })
-
-    r.RuleScenario('Back page carries no party data', (s) => {
-      let mounted: Mounted
-      s.Given('multiple parties with tokens', () => {
-        registerEndpoint('/api/admin/parties', { method: 'GET', handler: () => ({ parties }) })
-      })
-      s.When('the letters batch view renders', async () => {
-        mounted = await mountLetters()
-      })
-      s.Then('no back page contains a party name, a QR code, or an RSVP URL', () => {
-        expect(mounted.backs).toHaveLength(parties.length)
-        for (const back of mounted.backs) {
-          for (const party of parties) {
-            expect(back.text()).not.toContain(party.name)
-            expect(back.text()).not.toContain(party.token)
-          }
-          expect(back.find('[data-qr]').exists()).toBe(false)
-          expect(back.text()).not.toContain('?t=')
-        }
-      })
-    })
-
-    r.RuleScenario('Back page shows monogram, divider, and inset border', (s) => {
-      let mounted: Mounted
-      s.Given('multiple parties with tokens', () => {
-        registerEndpoint('/api/admin/parties', { method: 'GET', handler: () => ({ parties }) })
-      })
-      s.When('the letters batch view renders', async () => {
-        mounted = await mountLetters()
-      })
-      s.Then('each back page shows the C & M monogram, a floral divider below it, and an inset hairline border rectangle', () => {
-        expect(mounted.backs.length).toBeGreaterThan(0)
-        for (const back of mounted.backs) {
-          expect(back.find('[data-monogram]').text()).toMatch(/C\s*&\s*M/)
-          expect(back.find('[data-back-divider]').exists()).toBe(true)
-          expect(back.find('[data-back-border]').exists()).toBe(true)
-        }
-      })
-    })
-
-    r.RuleScenario('Single-party reprint includes its back', (s) => {
-      let mounted: Mounted
-      s.Given('multiple parties with tokens', () => {
-        registerEndpoint('/api/admin/parties', { method: 'GET', handler: () => ({ parties }) })
-      })
-      s.When('the letters view renders for a single party via the party query parameter', async () => {
-        mounted = await mountLetters({ party: '1' })
-      })
-      s.Then('one letter and one back page are rendered', () => {
-        expect(mounted.wrapper.findAll('[data-letter]')).toHaveLength(1)
-        expect(mounted.backs).toHaveLength(1)
-      })
-    })
-  })
-
-  f.Rule('Letter back floral art follows the arch construction', (r) => {
-    // source-level, same convention as the tulip corner art checks
-    const componentSrc = () => readFileSync('app/components/PrintLetterBack.vue', 'utf8')
-
-    r.RuleScenario('Art uses theme tokens and scoped ids', (s) => {
-      let src = ''
-      s.Given('the letter back component', () => {
-        src = componentSrc()
-      })
-      s.When('its markup is inspected', () => {})
-      s.Then('its floral fills reference theme colour tokens, its defs ids are scoped per instance, and the art is instanced via use references', () => {
-        expect(src).toContain('var(--color-')
-        // no literal hex fills on the art
-        expect(src).not.toMatch(/fill="#/)
-        // ids scoped per instance via useId, instanced with <use>
-        expect(src).toContain('useId()')
-        expect(src).toContain('`${uid}-')
-        expect(src).toContain('<use')
-      })
-    })
-
-    r.RuleScenario('Reduced motion suppresses the reveal', (s) => {
-      let src = ''
-      s.Given('the letter back component', () => {
-        src = componentSrc()
-      })
-      s.When('its markup is inspected', () => {})
-      s.Then('the reveal animation is declared only inside a prefers-reduced-motion no-preference block', () => {
-        const media = src.match(/@media \(prefers-reduced-motion: no-preference\) \{[\s\S]*?\n\}/)?.[0] ?? ''
-        expect(media).toContain('animation:')
-        // every animation declaration lives inside that media block
-        const count = (text: string) => (text.match(/animation:/g) ?? []).length
-        expect(count(src)).toBe(count(media))
-      })
-    })
-  })
-
   f.Rule('Bottom divider on invite letters', (r) => {
-    // source-level, same convention as the tulip corner art check above
     r.RuleScenario('Letter shows a closing divider', (s) => {
-      let src = ''
-      s.Given('the RSVP letters print page', () => {
-        src = readFileSync('app/pages/admin/print/letters.vue', 'utf8')
+      let wrapper: LettersWrapper
+      s.Given('multiple parties with tokens', () => {
+        registerParties()
       })
-      s.When('its markup is inspected', () => {})
-      s.Then('a centered divider appears at the bottom of each letter, below the QR/URL content', () => {
-        // divider lives in the bleed layer alongside the bottom-anchored tulip corners
-        const bleed = src.match(/<template #bleed>[\s\S]*?<\/template>/)?.[0] ?? ''
-        expect(bleed).toMatch(/<FloralDivider[^>]*class="[^"]*\babsolute\b[^"]*\bbottom-/)
+      s.When('the letters batch view renders', async () => {
+        wrapper = await mountLetters()
+      })
+      s.Then('each letter contains a centered divider at its bottom, below the column content', () => {
+        const letters = wrapper.findAll('[data-letter]')
+        expect(letters.length).toBeGreaterThan(0)
+        for (const letter of letters) {
+          expect(letter.find('[data-letter-divider]').exists()).toBe(true)
+        }
       })
     })
   })

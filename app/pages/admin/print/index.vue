@@ -3,7 +3,7 @@ definePageMeta({ layout: 'admin' })
 useSeoMeta({ title: 'Print — Wedding HQ', robots: 'noindex' })
 
 const links = [
-  { to: '/admin/print/letters', title: 'RSVP letters', desc: 'A5 invite letters, one per party, each with a personal QR code.' },
+  { to: '/admin/print/letters', title: 'RSVP letters', desc: 'A6 invite letters, two per A5 or A4 sheet — print at 100%' },
   { to: '/admin/print/seating', title: 'Seating chart', desc: 'Large-format chart of the seating plan for the venue wall.' },
   { to: '/admin/print/place-cards', title: 'Place cards', desc: 'A4 sheets of tent-fold cards with names and meal markers.' },
   { to: '/admin/print/handout', title: 'Day handout', desc: 'A5 order-of-the-day and venue notes from handout.json.' },
