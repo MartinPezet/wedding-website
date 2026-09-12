@@ -19,6 +19,8 @@ interface AdminParty {
   respondedAt: string | null
   phone: string | null
   guests: AdminGuest[]
+  amountPaid: number
+  roomTotal: number
 }
 
 const { data: stats } = await useFetch('/api/admin/stats')
@@ -51,6 +53,14 @@ async function copyLink(party: AdminParty) {
   setTimeout(() => { copied.value = 0 }, 1500)
 }
 
+const roomCards = computed(() =>
+  ROOM_NIGHTS.map(night => ({
+    night,
+    label: ROOM_NIGHT_LABELS[night],
+    choices: (stats.value?.roomTotals ?? []).filter(entry => entry.night === night),
+  })),
+)
+
 const statCards = computed(() => [
   { label: 'Invited', value: stats.value?.invited ?? 0 },
   { label: 'Responded', value: stats.value?.responded ?? 0 },
@@ -79,6 +89,19 @@ const statCards = computed(() => [
           <li v-for="option in mealCourse.options" :key="option.id" class="flex justify-between gap-2">
             <span class="text-ink">{{ option.name }}</span>
             <span class="font-semibold text-petal-deep">{{ option.count }}</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <h2 class="mt-6 font-display text-xl text-ink">Rooms requested</h2>
+    <div class="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2" data-testid="room-totals">
+      <div v-for="card in roomCards" :key="card.night" class="rounded-lg border border-ink/10 bg-white/70 p-3">
+        <p class="text-xs uppercase tracking-widest text-leaf-deep">{{ card.label }}</p>
+        <ul class="mt-2 space-y-1 text-sm">
+          <li v-for="entry in card.choices" :key="entry.choice" class="flex justify-between gap-2">
+            <span class="text-ink">{{ ROOM_CHOICE_LABELS[entry.choice] }}</span>
+            <span class="font-semibold text-petal-deep">{{ entry.count }}</span>
           </li>
         </ul>
       </div>
@@ -127,6 +150,9 @@ const statCards = computed(() => [
           <button type="button" class="text-petal-deep hover:text-petal" @click="copyLink(party)">
             {{ copied === party.id ? 'Copied!' : 'Copy RSVP link' }}
           </button>
+          <span v-if="party.roomTotal" class="text-ink/70" data-testid="party-payment">
+            Rooms £{{ party.roomTotal }} · paid £{{ party.amountPaid }}
+          </span>
         </div>
       </li>
     </ul>

@@ -1,0 +1,7 @@
+{
+  "monzoHandle": "placeholder",
+  "prices": {
+    "before": { "perPerson": 95 },
+    "of": { "ourRoom": 160, "perPerson": 80 }
+  }
+}

@@ -1,7 +1,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: Admin can edit RSVP answers
-The admin SHALL be able to edit any guest's attendance and dietary notes, and a party's room bookings, at any time including after the RSVP deadline. Once the food-choice page is toggled on, the admin SHALL separately be able to edit any guest's choice for every course defined in menu.json (including already-chosen options), at any time including after the food deadline. These are edited as two separate sets of answers, matching the two guest-facing pages.
+The admin SHALL be able to edit any guest's attendance, and a party's room bookings, at any time including after the RSVP deadline. Once the food-choice page is toggled on, the admin SHALL separately be able to edit any guest's dietary notes and their choice for every course defined in menu.json (including already-chosen options), at any time including after the food deadline. These are edited as two separate sets of answers, matching the two guest-facing pages.
 
 #### Scenario: Attendance correction after deadline
 - **WHEN** the admin changes a guest's attendance after the RSVP deadline

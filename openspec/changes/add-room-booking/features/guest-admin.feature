@@ -36,8 +36,8 @@ Feature: Guest admin
 
   @req:admin-can-edit-rsvp-answers
   Rule: Admin can edit RSVP answers
-    Attendance, dietary notes, and room bookings editable any time; course choices editable
-    any time once food choice is open — as two separate sets of answers.
+    Attendance and room bookings editable any time; course choices and dietary notes
+    editable any time once food choice is open — as two separate sets of answers.
 
     Scenario: Attendance correction after deadline
       Given a guest with a passed RSVP deadline

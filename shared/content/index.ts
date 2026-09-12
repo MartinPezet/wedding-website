@@ -2,6 +2,7 @@ import faqJson from './faq.json'
 import giftsJson from './gifts.json'
 import handoutJson from './handout.json'
 import menuJson from './menu.json'
+import roomsJson from './rooms.json'
 import scheduleJson from './schedule.json'
 import travelJson from './hotels.json'
 import venueJson from './venue.json'
@@ -78,6 +79,23 @@ export interface Menu {
   courses: MenuCourse[]
 }
 
+/** which of the two wedding nights a room is booked for */
+export type RoomNight = 'before' | 'of'
+
+/** how a booked room is shared */
+export type RoomChoice = 'our_room' | 'share_named' | 'share_match'
+
+export interface Rooms {
+  /** monzo.me handle the payment link points at */
+  monzoHandle: string
+  prices: {
+    /** night before: per person whatever the choice */
+    before: { perPerson: number }
+    /** night of: flat per own room, per person for shares */
+    of: { ourRoom: number, perPerson: number }
+  }
+}
+
 /** on-the-day printed handout: ordered sections, each a title + line items */
 export interface HandoutSection {
   title: string
@@ -96,3 +114,4 @@ export const gifts: Gifts = giftsJson
 // json infers id: string; the union is narrowed here
 export const menu: Menu = menuJson as Menu
 export const handout: Handout = handoutJson
+export const rooms: Rooms = roomsJson

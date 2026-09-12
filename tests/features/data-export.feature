@@ -19,12 +19,13 @@ Feature: Data export
 
   @req:full-guest-list-export
   Rule: Full guest list export
-    Every party and guest with contact, response details, and per-course choices.
+    Every party and guest with contact, response details, per-course choices, room bookings,
+    and amount paid.
 
     Scenario: Full export
-      Given parties, guests, and RSVP responses
+      Given parties, guests, RSVP responses, and room bookings
       When the admin requests the full export
-      Then an .xlsx is returned containing every guest with phones, statuses, per-course choices, dietary notes, song requests, and notes
+      Then an .xlsx is returned containing every guest with phones, statuses, per-course choices, dietary notes, song requests, notes, room bookings, and amount paid
 
   @req:save-the-date-responses-in-the-full-export
   Rule: Save-the-date responses in the full export

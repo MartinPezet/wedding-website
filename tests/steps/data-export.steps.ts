@@ -87,9 +87,27 @@ const mixedSeed = async (db: Db) => {
       dessertChoiceId: course('dessert').childOptions![0]!.id,
     },
   ], { responded: true, songRequest: 'Dancing Queen', noteToCouple: 'Congrats!' })
+  await seedRooms(db, 'The Fulls', [
+    { night: 'of', choice: 'our_room', shareWith: null, occupants: 2 },
+    { night: 'before', choice: 'share_named', shareWith: 'Jo Jones', occupants: 1 },
+  ], 100)
   await seedParty(db, 'The Nopes', [{ name: 'Nia Nope', phone: '+447700123456', attending: false }], { responded: true })
   await seedParty(db, 'The Ghosts', [{ name: 'Gil Ghost' }], {})
   await seedResponse(db, {})
+}
+
+/** rooms are party-scoped; the workbook reports them next to the amount paid */
+const seedRooms = async (
+  db: Db,
+  partyName: string,
+  rooms: { night: 'before' | 'of', choice: 'our_room' | 'share_named' | 'share_match', shareWith: string | null, occupants: number }[],
+  amountPaid: number,
+) => {
+  const { parties, roomRequests } = await import('../../server/db/schema')
+  const { eq } = await import('drizzle-orm')
+  const party = await db.query.parties.findFirst({ where: eq(parties.name, partyName) })
+  await db.insert(roomRequests).values(rooms.map((room, index) => ({ ...room, partyId: party!.id, sortOrder: index })))
+  await db.update(parties).set({ amountPaid }).where(eq(parties.id, party!.id))
 }
 
 const seedResponse = async (db: Db, over: Record<string, unknown>) => {
@@ -204,7 +222,7 @@ describeFeature(feature, (f) => {
     r.RuleScenario('Full export', (s) => {
       let db: Db
       let workbook: ExcelJS.Workbook
-      s.Given('parties, guests, and RSVP responses', async () => {
+      s.Given('parties, guests, RSVP responses, and room bookings', async () => {
         db = await freshDb()
         await mixedSeed(db)
       })
@@ -213,7 +231,7 @@ describeFeature(feature, (f) => {
         workbook = await loadWorkbook(await buildFullWorkbook(db))
         expect(readFileSync('app/pages/admin/index.vue', 'utf8')).toContain('/api/admin/export/full')
       })
-      s.Then('an .xlsx is returned containing every guest with phones, statuses, per-course choices, dietary notes, song requests, and notes', () => {
+      s.Then('an .xlsx is returned containing every guest with phones, statuses, per-course choices, dietary notes, song requests, notes, room bookings, and amount paid', () => {
         const text = allCellText(workbook).join(' | ')
         for (const guest of ['Amy Full', 'Kid Full', 'Nia Nope', 'Gil Ghost']) {
           expect(text).toContain(guest)
@@ -228,6 +246,14 @@ describeFeature(feature, (f) => {
         expect(text).toContain('no nuts')
         expect(text).toContain('Dancing Queen')
         expect(text).toContain('Congrats!')
+        // room bookings, per night, with the shared-with name and what they owe vs paid
+        expect(text).toMatch(/night before/i)
+        expect(text).toMatch(/night of/i)
+        expect(text).toContain('Jo Jones')
+        expect(text).toMatch(/amount paid/i)
+        // 160 (own room, night of) + 95 (named share, night before)
+        expect(allCellText(workbook)).toContain('255')
+        expect(allCellText(workbook)).toContain('100')
       })
     })
   })
@@ -289,7 +315,7 @@ describeFeature(feature, (f) => {
         path: '/api/admin/backup',
         headers: { authorization: 'Bearer backup-secret' },
       }
-      let dump: { parties: unknown[], guests: unknown[], settings: unknown[] }
+      let dump: { parties: unknown[], guests: unknown[], settings: unknown[], roomRequests: unknown[] }
       s.Given('the correct bearer secret', async () => {
         db = await freshDb()
         await mixedSeed(db)
@@ -305,6 +331,7 @@ describeFeature(feature, (f) => {
         expect(Array.isArray(dump.settings)).toBe(true)
         expect(dump.parties[0]).toMatchObject({ name: expect.any(String), token: expect.any(String) })
         expect(dump.saveTheDateResponses).toMatchObject([{ name: 'The Windsors', phone: '+447911123456' }])
+        expect(dump.roomRequests).toHaveLength(2)
       })
     })
 

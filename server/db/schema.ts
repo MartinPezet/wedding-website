@@ -20,6 +20,22 @@ export const parties = sqliteTable('parties', {
   noteToCouple: text('note_to_couple'),
   respondedAt: text('responded_at'),
   updatedAt: text('updated_at'),
+  /** manually recorded by the admin against the party's computed room total */
+  amountPaid: real('amount_paid').notNull().default(0),
+})
+
+// one row per booked room, per night — the later allocation portal pairs
+// individual share_match rows, which a JSON blob on the party would not allow
+export const roomRequests = sqliteTable('room_requests', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  partyId: integer('party_id').notNull().references(() => parties.id),
+  night: text('night', { enum: ['before', 'of'] }).notNull(),
+  choice: text('choice', { enum: ['our_room', 'share_named', 'share_match'] }).notNull(),
+  /** who they're sharing with — required for share_named, null otherwise */
+  shareWith: text('share_with'),
+  /** own guests in the room; only meaningful for our_room */
+  occupants: integer('occupants').notNull().default(1),
+  sortOrder: integer('sort_order').notNull().default(0),
 })
 
 export const guests = sqliteTable('guests', {
@@ -66,6 +82,11 @@ export const settings = sqliteTable('settings', {
 
 export const partiesRelations = relations(parties, ({ many }) => ({
   guests: many(guests),
+  roomRequests: many(roomRequests),
+}))
+
+export const roomRequestsRelations = relations(roomRequests, ({ one }) => ({
+  party: one(parties, { fields: [roomRequests.partyId], references: [parties.id] }),
 }))
 
 export const guestsRelations = relations(guests, ({ one }) => ({

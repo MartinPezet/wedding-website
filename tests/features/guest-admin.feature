@@ -1,6 +1,6 @@
 @guest-admin
 Feature: Guest admin
-  Dashboard, party management, RSVP editing, CSV import, settings, and save-the-date responses.
+  Dashboard, party management, RSVP/food/room editing, CSV import, settings, payment tracking, and save-the-date responses.
 
   @req:dashboard-with-response-overview
   Rule: Dashboard with response overview
@@ -36,10 +36,21 @@ Feature: Guest admin
 
   @req:admin-can-edit-rsvp-answers
   Rule: Admin can edit RSVP answers
-    Every course choice is editable at any time, including after the deadline.
+    Attendance and room bookings editable any time; course choices and dietary notes
+    editable any time once food choice is open — as two separate sets of answers.
 
-    Scenario: Meal correction after deadline
-      Given a guest with a submitted course choice and a passed RSVP deadline
+    Scenario: Attendance correction after deadline
+      Given a guest with a passed RSVP deadline
+      When the admin changes the guest's attendance
+      Then the change is saved and reflected in dashboard totals and exports
+
+    Scenario: Room booking correction after deadline
+      Given a party with a passed RSVP deadline
+      When the admin changes the party's room bookings
+      Then the change is saved and reflected in dashboard totals and exports
+
+    Scenario: Meal correction after food deadline
+      Given a guest with a submitted course choice and a passed food deadline
       When the admin changes one of the guest's course choices
       Then the change is saved and reflected in dashboard totals and exports
 
@@ -59,12 +70,45 @@ Feature: Guest admin
 
   @req:wedding-date-and-deadline-editable-in-admin-ui
   Rule: Wedding date and deadline editable in admin UI
-    Settings take effect immediately without redeploy.
+    Wedding date, RSVP/food/payment deadlines, and the food-choice toggle, all live immediately.
 
     Scenario: Deadline moved
       Given the admin settings page
       When the admin changes the RSVP deadline
       Then the RSVP form's lock behaviour follows the new deadline immediately
+
+    Scenario: Food deadline moved
+      Given the admin settings page
+      When the admin changes the food-choice deadline
+      Then the food-choice page's lock behaviour follows the new deadline immediately, independent of the RSVP deadline
+
+    Scenario: Food-choice toggled on
+      Given the food-choice toggle is off
+      When the admin switches it on
+      Then the food-choice page immediately shows the meal form to parties instead of closed-state copy
+
+  @req:room-request-visibility-on-the-dashboard
+  Rule: Room request visibility on the dashboard
+    Room-request counts per night and per choice shown alongside existing totals.
+
+    Scenario: Room totals reflect data
+      Given room requests across multiple parties and nights
+      When the admin opens the dashboard
+      Then room-request counts per night and per choice match the current database state
+
+  @req:payment-amount-tracked-per-party
+  Rule: Payment amount tracked per party
+    Admin-entered amount paid shown next to each party's computed room total.
+
+    Scenario: Amount recorded
+      Given a party with a computed room total
+      When the admin enters an amount paid for that party
+      Then the value is saved and shown next to that party's computed room total
+
+    Scenario: No amount recorded yet
+      Given a party that has booked rooms but has no amount recorded
+      When the admin views that party
+      Then the amount paid shows as zero against their computed total
 
   @req:save-the-date-responses-in-admin
   Rule: Save-the-date responses in admin
