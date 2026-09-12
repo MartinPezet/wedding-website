@@ -1,7 +1,12 @@
 {
-  "monzoHandle": "placeholder",
+  "paymentUrl": "https://monzo.me/martinpezet1?h=cxeKct&account_type=joint",
   "prices": {
-    "before": { "perPerson": 95 },
-    "of": { "ourRoom": 160, "perPerson": 80 }
+    "before": {
+      "perPerson": 95
+    },
+    "of": {
+      "ourRoom": 160,
+      "perPerson": 80
+    }
   }
 }

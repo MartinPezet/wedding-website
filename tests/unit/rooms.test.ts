@@ -3,8 +3,8 @@ import { rooms } from '#shared/content'
 import { PAYMENT_REFERENCE_PREFIX, monzoLink, paymentReference, roomPrice, roomTotal } from '#shared/utils/rooms'
 
 describe('rooms.json', () => {
-  it('carries a Monzo handle and both nights of pricing', () => {
-    expect(rooms.monzoHandle).toEqual(expect.any(String))
+  it('carries a Monzo payment URL and both nights of pricing', () => {
+    expect(rooms.paymentUrl).toMatch(/^https:\/\//)
     expect(rooms.prices.before.perPerson).toBe(95)
     expect(rooms.prices.of.ourRoom).toBe(160)
     expect(rooms.prices.of.perPerson).toBe(80)
@@ -51,9 +51,26 @@ describe('payment link', () => {
   })
 
   it('pre-fills the Monzo link with amount and reference', () => {
-    const link = monzoLink(540, 12)
-    expect(link).toContain(`monzo.me/${rooms.monzoHandle}`)
-    expect(link).toContain('amount=540')
-    expect(link).toContain(encodeURIComponent(paymentReference(12)))
+    const link = new URL(monzoLink(540, 12))
+    // monzo.me takes the amount as a path segment; as a query param it is ignored
+    expect(link.pathname).toBe(`${new URL(rooms.paymentUrl).pathname}/540`)
+    expect(link.searchParams.get('amount')).toBeNull()
+    expect(link.searchParams.get('d')).toBe(paymentReference(12))
+  })
+
+  it('leaves the path alone when nothing is owed', () => {
+    expect(new URL(monzoLink(0, 12)).pathname).toBe(new URL(rooms.paymentUrl).pathname)
+  })
+
+  it('keeps the query string the stored link already carries', () => {
+    // the joint-account link routes on its own params — dropping them would
+    // silently send every payment to the wrong account
+    const stored = new URL(rooms.paymentUrl)
+    const link = new URL(monzoLink(540, 12))
+    expect(link.origin).toBe(stored.origin)
+    expect(link.pathname.startsWith(stored.pathname)).toBe(true)
+    for (const [key, value] of stored.searchParams) {
+      expect(link.searchParams.get(key)).toBe(value)
+    }
   })
 })

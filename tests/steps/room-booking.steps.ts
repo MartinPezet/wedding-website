@@ -333,10 +333,11 @@ describeFeature(feature, (f) => {
         expect(wrapper.find('[data-room-total]').text()).toContain('£540')
         const link = wrapper.find('a[data-monzo-link]')
         expect(link.exists()).toBe(true)
-        const href = link.attributes('href')!
-        expect(href).toContain('monzo.me/')
-        expect(href).toContain('amount=540')
-        expect(decodeURIComponent(href)).toContain(paymentReference(data.partyId))
+        const href = new URL(link.attributes('href')!)
+        expect(href.host).toBe('monzo.me')
+        // monzo.me reads the amount off the end of the path, not a query param
+        expect(href.pathname.endsWith('/540')).toBe(true)
+        expect(href.searchParams.get('d')).toBe(paymentReference(data.partyId))
       })
     })
 

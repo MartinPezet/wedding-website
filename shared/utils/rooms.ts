@@ -66,6 +66,19 @@ export function paymentReference(partyId: number): string {
   return `${PAYMENT_REFERENCE_PREFIX}${partyId}`
 }
 
+/**
+ * The stored link with this party's amount and reference added.
+ *
+ * monzo.me reads the amount off the END OF THE PATH (/handle/540) and ignores
+ * an `amount` query param entirely — the reference is the query param (`d`).
+ * Built through URL so the link's own params, which pick the account it pays,
+ * survive rather than being clobbered by a naive `?` append.
+ */
 export function monzoLink(total: number, partyId: number): string {
-  return `https://monzo.me/${rooms.monzoHandle}?amount=${total}&d=${encodeURIComponent(paymentReference(partyId))}`
+  const link = new URL(rooms.paymentUrl)
+  if (total > 0) {
+    link.pathname = `${link.pathname.replace(/\/$/, '')}/${total}`
+  }
+  link.searchParams.set('d', paymentReference(partyId))
+  return link.toString()
 }

@@ -339,7 +339,7 @@ const fieldClass =
       <section v-if="anyAttending" v-reveal class="mt-10">
         <h2 class="font-display text-2xl text-ink">Staying over?</h2>
         <p class="mt-2 text-sm text-leaf-deep">
-          Book as many rooms as you need for either night — most are doubles and
+          Book as many rooms as you need for either night - most are doubles and
           twins.
         </p>
 
@@ -353,8 +353,8 @@ const fieldClass =
           </legend>
           <p class="text-sm text-leaf-deep">
             <template v-if="night === 'before'">
-              £{{ roomContent.prices.before.perPerson }} per person, including
-              dinner and continental breakfast.
+              £{{ roomContent.prices.before.perPerson }} per person, including a
+              hot food buffet and continental breakfast.
             </template>
             <template v-else>
               £{{ roomContent.prices.of.ourRoom }} for a room of your own, or
@@ -451,7 +451,7 @@ const fieldClass =
           class="mt-6 rounded-2xl border border-petal/40 bg-white/70 px-5 py-4"
         >
           <p data-payment-disclaimer class="text-sm text-leaf-deep">
-            Nothing to pay right now — you can pay any time
+            You don't have to pay right now - you can pay any time
             <template v-if="paymentDeadlineLabel"
               >before {{ paymentDeadlineLabel }}</template
             >.
@@ -467,7 +467,7 @@ const fieldClass =
               rel="noopener"
               class="rounded-full bg-leaf-deep px-5 py-2.5 font-display text-sm text-cream transition hover:bg-leaf"
             >
-              Pay with Monzo
+              Pay here
             </a>
           </div>
         </div>

@@ -86,8 +86,11 @@ export type RoomNight = 'before' | 'of'
 export type RoomChoice = 'our_room' | 'share_named' | 'share_match'
 
 export interface Rooms {
-  /** monzo.me handle the payment link points at */
-  monzoHandle: string
+  /**
+   * The whole Monzo payment link, query string included — its own params are
+   * what route a payment to the right account, so they must survive intact.
+   */
+  paymentUrl: string
   prices: {
     /** night before: per person whatever the choice */
     before: { perPerson: number }
