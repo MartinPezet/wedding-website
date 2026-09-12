@@ -12,7 +12,6 @@ interface GuestForm {
 interface RoomForm {
   choice: RoomChoice | "";
   shareWith: string;
-  occupants: number;
 }
 
 const { data } = await useFetch("/api/rsvp");
@@ -36,35 +35,62 @@ if (data.value?.party) {
     bookedRooms.value[room.night].push({
       choice: room.choice,
       shareWith: room.shareWith ?? "",
-      occupants: room.occupants,
     });
   }
   song.value = data.value.party.songRequest ?? "";
   note.value = data.value.party.noteToCouple ?? "";
 }
 
-const anyAttending = computed(() =>
-  guests.value.some((guest) => guest.attending === "yes"),
+const attendingCount = computed(
+  () => guests.value.filter((guest) => guest.attending === "yes").length,
 );
+const anyAttending = computed(() => attendingCount.value > 0);
 
-/** flat, priceable view of the form's rooms — submitted in night order */
+/** wording and the per-night cap both follow how many of the party are coming */
+const choiceLabel = (choice: RoomChoice) =>
+  roomChoiceLabel(choice, attendingCount.value);
+const roomCap = computed(() => maxRoomsPerNight(attendingCount.value));
+const canAddRoom = (night: RoomNight) =>
+  bookedRooms.value[night].length < roomCap.value;
+
+/**
+ * Flat, priceable view of the form's rooms — submitted in night order.
+ * Nobody is asked how many sleep in each room: the party's attending guests are
+ * spread across that night's rooms in order, a share taking one of them and a
+ * room of their own taking up to two, so the night-before per-person price only
+ * ever counts beds the party actually needs.
+ */
 const chosenRooms = computed(() =>
-  ROOM_NIGHTS.flatMap((night) =>
-    bookedRooms.value[night]
+  ROOM_NIGHTS.flatMap((night) => {
+    let unplaced = attendingCount.value;
+    return bookedRooms.value[night]
       .filter((room) => room.choice !== "")
-      .map((room) => ({
-        night,
-        choice: room.choice as RoomChoice,
-        shareWith: room.choice === "share_named" ? room.shareWith : null,
-        occupants: room.occupants,
-      })),
-  ),
+      .map((room) => {
+        const occupants =
+          room.choice === "our_room" ? Math.min(Math.max(unplaced, 1), 2) : 1;
+        unplaced -= occupants;
+        return {
+          night,
+          choice: room.choice as RoomChoice,
+          shareWith: room.choice === "share_named" ? room.shareWith : null,
+          occupants,
+        };
+      });
+  }),
 );
 
 const total = computed(() => roomTotal(chosenRooms.value));
 
+/** what one row of the form currently costs, using its derived occupancy */
+const priceOf = (night: RoomNight, index: number) => {
+  const room = chosenRooms.value.filter((entry) => entry.night === night)[
+    index
+  ];
+  return room ? roomPrice(night, room.choice, room.occupants) : 0;
+};
+
 const addRoom = (night: RoomNight) =>
-  bookedRooms.value[night].push({ choice: "", shareWith: "", occupants: 1 });
+  bookedRooms.value[night].push({ choice: "", shareWith: "" });
 const removeRoom = (night: RoomNight, index: number) =>
   bookedRooms.value[night].splice(index, 1);
 
@@ -92,7 +118,7 @@ const roomSummary = (room: {
   const label =
     room.choice === "share_named" && room.shareWith
       ? `Sharing with ${room.shareWith}`
-      : ROOM_CHOICE_LABELS[room.choice];
+      : roomChoiceLabel(room.choice, attendingCount.value);
   return `${label} — £${roomPrice(room.night, room.choice, room.occupants)}`;
 };
 
@@ -188,7 +214,10 @@ const fieldClass =
         </li>
       </ul>
       <template v-for="night in ROOM_NIGHTS" :key="night">
-        <div v-if="data.rooms.some((room) => room.night === night)" class="mt-6">
+        <div
+          v-if="data.rooms.some((room) => room.night === night)"
+          class="mt-6"
+        >
           <h3 class="text-left font-display text-lg text-ink">
             {{ ROOM_NIGHT_LABELS[night] }}
           </h3>
@@ -328,10 +357,10 @@ const fieldClass =
               dinner and continental breakfast.
             </template>
             <template v-else>
-              £{{ roomContent.prices.of.ourRoom }} for a room of your own, or £{{
-                roomContent.prices.of.perPerson
-              }}
-              per person to share.
+              £{{ roomContent.prices.of.ourRoom }} for a room of your own, or
+              £{{ roomContent.prices.of.perPerson }}
+              per person to share. This includes a full English breakfast the
+              next day.
             </template>
           </p>
 
@@ -356,38 +385,8 @@ const fieldClass =
                     :key="choice"
                     :value="choice"
                   >
-                    {{ ROOM_CHOICE_LABELS[choice] }}
+                    {{ choiceLabel(choice) }}
                   </option>
-                </select>
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                  class="pointer-events-none absolute right-4 top-1/2 size-4 -translate-y-1/2 text-leaf-deep"
-                >
-                  <path d="m6 9 6 6 6-6" />
-                </svg>
-              </span>
-            </label>
-
-            <label
-              v-if="room.choice === 'our_room'"
-              class="mt-3 block text-sm text-leaf-deep"
-            >
-              How many of you in it?
-              <span class="relative mt-1 block">
-                <select
-                  v-model.number="room.occupants"
-                  :name="`room-${night}-${index}-occupants`"
-                  class="w-full appearance-none pr-10"
-                  :class="fieldClass"
-                >
-                  <option :value="1">Just one of us</option>
-                  <option :value="2">Two of us</option>
                 </select>
                 <svg
                   viewBox="0 0 24 24"
@@ -423,7 +422,7 @@ const fieldClass =
             <div class="mt-2 flex items-center justify-between text-sm">
               <span class="text-leaf-deep">
                 <template v-if="room.choice"
-                  >£{{ roomPrice(night, room.choice, room.occupants) }}</template
+                  >£{{ priceOf(night, index) }}</template
                 >
               </span>
               <button
@@ -437,6 +436,8 @@ const fieldClass =
           </div>
 
           <button
+            v-if="canAddRoom(night)"
+            :data-add-room="night"
             type="button"
             class="mt-4 rounded-full border border-leaf/40 px-4 py-2 font-display text-sm text-leaf-deep transition hover:border-petal hover:text-petal"
             @click="addRoom(night)"
@@ -472,7 +473,7 @@ const fieldClass =
         </div>
       </section>
 
-      <div class="mt-8 flex flex-col gap-3">
+      <div v-reveal class="mt-8 flex flex-col gap-3">
         <label
           class="text-sm uppercase tracking-widest text-petal-deep"
           for="rsvp-song"
@@ -514,6 +515,7 @@ const fieldClass =
       </p>
 
       <button
+        v-reveal
         type="submit"
         :disabled="pending"
         class="mt-6 w-full rounded-full bg-leaf-deep px-5 py-3 font-display text-cream transition hover:bg-leaf disabled:opacity-60"

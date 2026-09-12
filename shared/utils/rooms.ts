@@ -22,6 +22,26 @@ export const ROOM_CHOICE_LABELS: Record<RoomChoice, string> = {
   share_match: 'Match us with another guest',
 }
 
+/**
+ * The own-room option is worded for the party reading it — "just me" alone,
+ * "just us" as a pair, "some of us" once a party is big enough that a room
+ * holds only part of it. Omit the size for a neutral label (admin, exports).
+ */
+export function roomChoiceLabel(choice: RoomChoice, attending?: number): string {
+  if (choice !== 'our_room' || attending === undefined) return ROOM_CHOICE_LABELS[choice]
+  if (attending <= 1) return 'A room for just me'
+  if (attending === 2) return 'A room for just us'
+  return 'A whole room for some of us'
+}
+
+/**
+ * One room is all a party of one or two can need; beyond that a party may book
+ * up to one room per attending guest.
+ */
+export function maxRoomsPerNight(attending: number): number {
+  return attending > 2 ? attending : 1
+}
+
 export const PAYMENT_REFERENCE_PREFIX = 'RSVP-'
 
 /**

@@ -5,7 +5,7 @@ import { readBody } from 'h3'
 import { expect } from 'vitest'
 import { clearNuxtData } from '#imports'
 import type { RoomChoice, RoomNight } from '#shared/content'
-import { paymentReference, roomTotal } from '#shared/utils/rooms'
+import { maxRoomsPerNight, paymentReference, roomChoiceLabel, roomTotal } from '#shared/utils/rooms'
 
 setVitestCucumberConfiguration({ excludeTags: ['manual'] })
 
@@ -46,6 +46,24 @@ const rsvpData = (over: Partial<RsvpData> = {}): RsvpData => ({
   locked: false,
   ...over,
 })
+
+const partyOf = (attending: number): RsvpData['guests'] =>
+  Array.from({ length: attending }, (_, index) => ({
+    id: index + 1,
+    name: `Guest ${index + 1}`,
+    isChild: false,
+    attending: true,
+  }))
+
+/** click "Add a room" for one night as many times as the page still allows */
+const addRoomsUntilCapped = async (wrapper: Wrapper, night: RoomNight, attempts: number) => {
+  for (let i = 0; i < attempts; i++) {
+    const button = wrapper.find(`[data-add-room="${night}"]`)
+    if (!button.exists()) break
+    await button.trigger('click')
+  }
+  return wrapper.findAll(`select[name^="room-${night}-"][name$="-choice"]`).length
+}
 
 let posted: unknown = null
 registerEndpoint('/api/rsvp', {
@@ -171,6 +189,94 @@ describeFeature(feature, (f) => {
     })
   })
 
+  f.Rule('Room options scale with the attending party', (r) => {
+    const sizeScenario = (label: string, attending: number, expected: string, cap: number) =>
+      (s: Parameters<Parameters<typeof r.RuleScenario>[1]>[0]) => {
+        let wrapper: Wrapper
+        let rendered = 0
+        s.Given(label, async () => {
+          wrapper = await mountRsvp(rsvpData({ guests: partyOf(attending) }))
+        })
+        s.When('the room booking section is rendered', async () => {
+          rendered = await addRoomsUntilCapped(wrapper, 'of', attending + 2)
+        })
+        s.Then(expected, () => {
+          expect(maxRoomsPerNight(attending)).toBe(cap)
+          expect(rendered).toBe(cap)
+          // the add button is gone once the cap is reached
+          expect(wrapper.find('[data-add-room="of"]').exists()).toBe(false)
+          const choices = wrapper.find('select[name="room-of-0-choice"]').html()
+          expect(choices).toContain(roomChoiceLabel('our_room', attending))
+          expect(choices).toContain(roomChoiceLabel('share_named'))
+          expect(choices).toContain(roomChoiceLabel('share_match'))
+        })
+      }
+
+    r.RuleScenario(
+      'Solo party wording and cap',
+      sizeScenario(
+        'a party with one attending guest',
+        1,
+        'the own-room option reads "A room for just me" and no second room can be added to a night',
+        1,
+      ),
+    )
+
+    r.RuleScenario(
+      'Couple wording and cap',
+      sizeScenario(
+        'a party with two attending guests',
+        2,
+        'the own-room option reads "A room for just us" and no second room can be added to a night',
+        1,
+      ),
+    )
+
+    r.RuleScenario(
+      'Larger party wording and cap',
+      sizeScenario(
+        'a party with more than two attending guests',
+        4,
+        'the own-room option reads "A whole room for some of us" and rooms may be added to a night up to the number of attending guests',
+        4,
+      ),
+    )
+
+    r.RuleScenario('Occupancy derived, never asked', (s) => {
+      let wrapper: Wrapper
+      s.Given('a party of three booking two rooms of their own for the night before', async () => {
+        wrapper = await mountRsvp(rsvpData({
+          guests: partyOf(3),
+          rooms: [room('before', 'our_room'), room('before', 'our_room')],
+        }))
+      })
+      s.When('the room booking section is rendered', () => {})
+      s.Then('the first room is priced for two guests and the second for one, with no occupancy question shown', () => {
+        expect(wrapper.html()).not.toMatch(/How many of you/i)
+        expect(wrapper.find('select[name="room-before-0-occupants"]').exists()).toBe(false)
+        // 95pp: the first room sleeps two of the three, the second the last one
+        expect(wrapper.find('[data-room-total]').text()).toContain(`£${roomTotal([
+          { night: 'before', choice: 'our_room', occupants: 2 },
+          { night: 'before', choice: 'our_room', occupants: 1 },
+        ])}`)
+      })
+    })
+
+    r.RuleScenario('Cap applies per night', (s) => {
+      let wrapper: Wrapper
+      s.Given('a party of two that has already booked its one room for the night of the wedding', async () => {
+        wrapper = await mountRsvp(rsvpData({ guests: partyOf(2) }))
+        await addRoomsUntilCapped(wrapper, 'of', 3)
+        expect(wrapper.find('[data-add-room="of"]').exists()).toBe(false)
+      })
+      s.When('the night-before list is inspected', () => {})
+      s.Then('it may still book a room for the night before', async () => {
+        expect(wrapper.find('[data-add-room="before"]').exists()).toBe(true)
+        expect(await addRoomsUntilCapped(wrapper, 'before', 3)).toBe(1)
+      })
+    })
+  })
+
   f.Rule('Independent per-night pricing', (r) => {
     r.RuleScenario('Night-of pricing', (s) => {
       let booked: { night: RoomNight, choice: RoomChoice, occupants: number }[]
@@ -211,8 +317,9 @@ describeFeature(feature, (f) => {
       s.Given('a party with rooms booked totalling £540', () => {
         // 160 (own room, night of) + 190 + 190 (two own rooms of two, night before)
         data = rsvpData({
+          guests: partyOf(4),
           rooms: [
-            room('of', 'our_room', { occupants: 1 }),
+            room('of', 'our_room', { occupants: 2 }),
             room('before', 'our_room', { occupants: 2 }),
             room('before', 'our_room', { occupants: 2 }),
           ],
@@ -346,7 +453,9 @@ describeFeature(feature, (f) => {
         expect((wrapper.find('input[name="room-of-0-share"]').element as HTMLInputElement).value).toBe('Jo Jones')
         const nightBeforeChoice = wrapper.find('select[name="room-before-0-choice"]')
         expect((nightBeforeChoice.element as HTMLSelectElement).value).toBe('our_room')
-        expect((wrapper.find('select[name="room-before-0-occupants"]').element as HTMLSelectElement).value).toBe('2')
+        // occupancy follows the attending party rather than being asked for
+        expect(wrapper.find('select[name="room-before-0-occupants"]').exists()).toBe(false)
+        expect(wrapper.html()).not.toMatch(/How many of you/i)
 
         await nightOfChoice.setValue('share_match')
         await wrapper.find('form').trigger('submit')

@@ -4,7 +4,7 @@ Feature: Room booking
 
   @req:per-night-room-booking
   Rule: Per-night room booking
-    Any number of rooms per night, three choices per room, zero rooms allowed.
+    Rooms booked per night, three choices per room, zero rooms allowed.
 
     Scenario: Multiple rooms booked for one night
       Given a party adding three rooms to the night-of list, each with a different choice
@@ -20,6 +20,36 @@ Feature: Room booking
       Given a party with no rooms added to either night
       When the RSVP is submitted
       Then the submission is accepted and no room requests are stored
+
+
+  @req:room-options-scale-with-the-attending-party
+  Rule: Room options scale with the attending party
+    Own-room wording and the per-night room cap follow the attending headcount; prices unchanged.
+
+    Scenario: Solo party wording and cap
+      Given a party with one attending guest
+      When the room booking section is rendered
+      Then the own-room option reads "A room for just me" and no second room can be added to a night
+
+    Scenario: Couple wording and cap
+      Given a party with two attending guests
+      When the room booking section is rendered
+      Then the own-room option reads "A room for just us" and no second room can be added to a night
+
+    Scenario: Larger party wording and cap
+      Given a party with more than two attending guests
+      When the room booking section is rendered
+      Then the own-room option reads "A whole room for some of us" and rooms may be added to a night up to the number of attending guests
+
+    Scenario: Cap applies per night
+      Given a party of two that has already booked its one room for the night of the wedding
+      When the night-before list is inspected
+      Then it may still book a room for the night before
+
+    Scenario: Occupancy derived, never asked
+      Given a party of three booking two rooms of their own for the night before
+      When the room booking section is rendered
+      Then the first room is priced for two guests and the second for one, with no occupancy question shown
 
   @req:independent-per-night-pricing
   Rule: Independent per-night pricing
