@@ -7,22 +7,26 @@ JSON-driven guest-facing content pages: schedule (with maps and .ics download), 
 ## Requirements
 
 ### Requirement: Schedule page from JSON
-The system SHALL render an event schedule page from `schedule.json`, showing each event's name, time, and location with a Google Maps link.
+The system SHALL render an event schedule page from `schedule.json`, showing each event's name, start time, and location. An event's location MAY be a room within the venue. An event's end time and a Google Maps link SHALL be shown only when the event provides them.
 
 #### Scenario: Event listed with map link
 - **WHEN** a guest views the schedule page
-- **THEN** each event from schedule.json appears with name, time, location, and a link opening the location in Google Maps
+- **THEN** each event from schedule.json appears with name, start time, and location, plus its end time and a Google Maps link when schedule.json provides them
 
 #### Scenario: Adding an event
 - **WHEN** a new event is added to schedule.json and the site redeployed
 - **THEN** the schedule page shows the new event with no component changes
 
 ### Requirement: Add-to-calendar download
-The system SHALL provide an .ics calendar download for the wedding day events, importable by common calendar apps.
+The system SHALL provide an .ics calendar download for the wedding day events, importable by common calendar apps. An event without an end time SHALL be written without an end property rather than with an empty or invalid one.
 
 #### Scenario: Guest downloads calendar file
 - **WHEN** a guest taps the add-to-calendar link
 - **THEN** a valid .ics file downloads containing the event(s) with correct titles, times, and locations
+
+#### Scenario: Event without an end time
+- **WHEN** the calendar file is built for an event that has no end time
+- **THEN** that event carries a start time and no end property
 
 ### Requirement: Travel and accommodation page from JSON
 The system SHALL render a travel page from `hotels.json` covering recommended hotels, transport links, and parking information.
@@ -32,11 +36,11 @@ The system SHALL render a travel page from `hotels.json` covering recommended ho
 - **THEN** each hotel from hotels.json appears with name, description, distance/link, alongside transport and parking sections
 
 ### Requirement: Gift registry page
-The system SHALL render a gift page with a honeymoon fund link and message from `gifts.json`.
+The system SHALL render a gift page with the message from `gifts.json` alongside a photo of the couple. The page SHALL NOT require an external gift or fund link.
 
 #### Scenario: Guest visits gift page
 - **WHEN** a guest views the gift page
-- **THEN** the honeymoon fund message and external link from gifts.json are displayed
+- **THEN** the message from gifts.json and the couple's photo are displayed, with no external fund link
 
 ### Requirement: FAQ page from JSON
 The system SHALL render an FAQ page from `faq.json`. Adding a question SHALL require only a JSON edit.
