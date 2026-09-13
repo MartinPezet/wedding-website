@@ -26,12 +26,14 @@ describeFeature(feature, (f) => {
       s.When('a guest views the schedule page', async () => {
         html = (await mountSuspended(await page('schedule'))).html()
       })
-      s.Then('each event appears with name, time, location, and a Google Maps link', () => {
+      s.Then('each event appears with name, start time, and location, plus its end time and a Google Maps link when given', () => {
         for (const event of schedule) {
           expect(html).toContain(esc(event.name))
           expect(html).toContain(esc(event.location))
-          expect(html).toContain(event.mapsUrl)
+          if (event.mapsUrl) expect(html).toContain(event.mapsUrl)
         }
+        // an event without a maps link must not render an empty one
+        expect(html).not.toContain('href=""')
         // times rendered human-readably (at least the hour appears)
         expect(html).toMatch(/\d{1,2}[:.]\d{2}/)
       })
@@ -72,6 +74,22 @@ describeFeature(feature, (f) => {
           expect(ics).toContain(`DTSTART:${dtstart}00`)
           expect(ics).toContain(event.location.replaceAll(',', '\\,'))
         }
+        // an event with no end time must not produce an empty or invalid DTEND
+        expect(ics).not.toMatch(/^DTEND:(00)?\r?$/m)
+      })
+    })
+
+    r.RuleScenario('Event without an end time', (s) => {
+      let ics = ''
+      s.Given('a schedule event with no end time', () => {})
+      s.When('the calendar file is built', async () => {
+        ics = (await import('../../server/utils/ics')).buildIcs([
+          { name: 'Guests arrive', start: '2027-01-16T12:30', location: 'The Great Hall' },
+        ])
+      })
+      s.Then('that event carries a start time and no end property', () => {
+        expect(ics).toContain('DTSTART:20270116T123000')
+        expect(ics).not.toMatch(/^DTEND/m)
       })
     })
   })
@@ -103,16 +121,16 @@ describeFeature(feature, (f) => {
   f.Rule('Gift registry page', (r) => {
     r.RuleScenario('Guest visits gift page', (s) => {
       let html = ''
-      s.Given('a fund message and link in gifts.json', () => {
-        expect(gifts.url).toBeTruthy()
+      s.Given('a gift message in gifts.json', () => {
+        expect(gifts.message).toBeTruthy()
       })
       s.When('a guest views the gift page', async () => {
         html = (await mountSuspended(await page('gifts'))).html()
       })
-      s.Then('the honeymoon fund message and external link are displayed', () => {
-        expect(html).toContain(gifts.message)
-        expect(html).toContain(gifts.url)
-        expect(html).toContain(gifts.linkText)
+      s.Then("the message and the couple's photo are displayed, with no external fund link", () => {
+        expect(html).toContain(esc(gifts.message))
+        expect(html).toContain('honeymoon.jpg')
+        expect(html).not.toMatch(/href="https?:\/\//)
       })
     })
   })
@@ -129,9 +147,9 @@ describeFeature(feature, (f) => {
       s.Then('every pair is displayed in order', () => {
         let cursor = -1
         for (const entry of faq) {
-          const at = html.indexOf(entry.question)
+          const at = html.indexOf(esc(entry.question))
           expect(at, `question "${entry.question}" present and in order`).toBeGreaterThan(cursor)
-          expect(html).toContain(entry.answer)
+          expect(html).toContain(esc(entry.answer))
           cursor = at
         }
       })

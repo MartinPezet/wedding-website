@@ -19,7 +19,8 @@ export function buildIcs(events: ScheduleEvent[]): string {
       `UID:event-${i}@wedding.ciera-and-martin`,
       `DTSTAMP:${stamp}Z`,
       `DTSTART:${dt(event.start)}`,
-      `DTEND:${dt(event.end)}`,
+      // RFC 5545 allows DTSTART alone; an empty DTEND makes the whole file invalid
+      ...(event.end ? [`DTEND:${dt(event.end)}`] : []),
       `SUMMARY:${esc(event.name)}`,
       `LOCATION:${esc(event.location)}`,
       ...(event.description ? [`DESCRIPTION:${esc(event.description)}`] : []),

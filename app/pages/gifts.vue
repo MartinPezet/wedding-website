@@ -3,7 +3,7 @@ import { gifts } from "#shared/content";
 
 useSeoMeta({
   title: "Gifts — Ciera & Martin",
-  description: "Our honeymoon fund.",
+  description: "A note on gifts from Ciera and Martin.",
 });
 </script>
 

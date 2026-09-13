@@ -22,9 +22,11 @@ export interface ScheduleEvent {
   name: string
   /** ISO local date-time, e.g. 2027-06-12T13:00 — venue-local, no timezone */
   start: string
-  end: string
+  /** omitted when the event has no set finish */
+  end?: string
+  /** often a room within the venue — the venue itself lives in venue.json */
   location: string
-  mapsUrl: string
+  mapsUrl?: string
   description?: string
 }
 
@@ -54,8 +56,6 @@ export interface FaqEntry {
 
 export interface Gifts {
   message: string
-  url: string
-  linkText: string
 }
 
 export interface MenuOption {
