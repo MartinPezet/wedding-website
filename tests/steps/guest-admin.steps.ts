@@ -663,6 +663,144 @@ describeFeature(feature, (f) => {
     })
   })
 
+  f.Rule('Payment status per party on the dashboard', (r) => {
+    interface Outstanding { partyId: number, name: string, owed: number, paid: number, shortfall: number }
+
+    /** a party with an own room on the night of the wedding (£160) and a hand-entered amount paid */
+    const seedPayer = async (db: Db, name: string, paid: number, rooms = true) => {
+      await setSetting(db, 'rsvp_deadline', '2100-01-01T00:00:00Z')
+      const party = await seedParty(db, name, [{ name: `${name} lead`, phone: '+447911123456', attending: true }], true)
+      const { saveRsvp } = await import('../../server/utils/rsvp')
+      await saveRsvp(db, party.id, {
+        phone: '+447911123456',
+        guests: [{ id: await firstGuestId(db, party.id), attending: true }],
+        rooms: rooms ? [{ night: 'of', choice: 'our_room', occupants: 2 }] : [],
+      })
+      if (paid) {
+        const { setAmountPaid } = await adminUtil()
+        await setAmountPaid(db, party.id, paid)
+      }
+      return party.id
+    }
+
+    const openDashboard = async (db: Db) => {
+      const { getDashboardStats } = await adminUtil()
+      const stats = await getDashboardStats(db)
+      registerEndpoint('/api/admin/stats', { method: 'GET', handler: () => stats })
+      registerEndpoint('/api/admin/parties', { method: 'GET', handler: async () => ({ parties: await listParties(db) }) })
+      const wrapper = await mountAdminPage('index')
+      return { outstanding: stats.outstandingPayments as Outstanding[], wrapper }
+    }
+
+    r.RuleScenario('Outstanding balance shown', (s) => {
+      let db: Db
+      let partyId = 0
+      let seen: Awaited<ReturnType<typeof openDashboard>>
+      s.Given('a party that owes more than it has paid', async () => {
+        db = await freshDb()
+        partyId = await seedPayer(db, 'The Owers', 100)
+      })
+      s.When('the admin opens the dashboard', async () => {
+        seen = await openDashboard(db)
+      })
+      s.Then('the dashboard shows its owed amount, its paid amount, and the shortfall', () => {
+        expect(seen.outstanding).toEqual([{ partyId, name: 'The Owers', owed: 160, paid: 100, shortfall: 60 }])
+        const list = seen.wrapper.find('[data-testid="outstanding-payments"]')
+        expect(list.exists()).toBe(true)
+        for (const value of ['The Owers', '£160', '£100', '£60']) {
+          expect(list.text()).toContain(value)
+        }
+      })
+    })
+
+    r.RuleScenario('Settled party not chased', (s) => {
+      let db: Db
+      let seen: Awaited<ReturnType<typeof openDashboard>>
+      s.Given('a party that has paid its full room total', async () => {
+        db = await freshDb()
+        await seedPayer(db, 'The Settled', 160)
+        await seedPayer(db, 'The Owers', 0)
+      })
+      s.When('the admin opens the dashboard', async () => {
+        seen = await openDashboard(db)
+      })
+      s.Then('it is not listed among the parties with an outstanding balance', () => {
+        expect(seen.outstanding.map(entry => entry.name)).toEqual(['The Owers'])
+        expect(seen.wrapper.find('[data-testid="outstanding-payments"]').text()).not.toContain('The Settled')
+      })
+    })
+
+    r.RuleScenario('Party with no rooms omitted', (s) => {
+      let db: Db
+      let seen: Awaited<ReturnType<typeof openDashboard>>
+      s.Given('a party that booked no rooms', async () => {
+        db = await freshDb()
+        await seedPayer(db, 'The Day Guests', 0, false)
+      })
+      s.When('the admin opens the dashboard', async () => {
+        seen = await openDashboard(db)
+      })
+      s.Then('it carries no payment status', () => {
+        expect(seen.outstanding).toEqual([])
+        expect(seen.wrapper.find('[data-testid="party-payment"]').exists()).toBe(false)
+      })
+    })
+  })
+
+  f.Rule('Reconciliation reachable from the admin', (r) => {
+    r.RuleScenario('Reconciliation started from the dashboard', (s) => {
+      let wrapper: Wrapper
+      let redirect = ''
+      let stored: { secure?: { monzoState?: string } } = {}
+      s.Given('an admin on the dashboard', async () => {
+        const db = await freshDb()
+        const { getDashboardStats } = await adminUtil()
+        const stats = await getDashboardStats(db)
+        registerEndpoint('/api/admin/stats', { method: 'GET', handler: () => stats })
+        registerEndpoint('/api/admin/parties', { method: 'GET', handler: () => ({ parties: [] }) })
+        wrapper = await mountAdminPage('index')
+      })
+      s.When('the admin chooses to check payments', async () => {
+        expect(wrapper.find('a[href="/api/admin/monzo/authorise"]').exists()).toBe(true)
+        // what the link's route does: remember a one-off state, send the admin to Monzo
+        vi.stubGlobal('setUserSession', async (_event: unknown, data: typeof stored) => {
+          stored = data
+        })
+        vi.stubGlobal('getRequestURL', () => new URL('https://wedding.test/api/admin/monzo/authorise'))
+        try {
+          const { beginAuthorisation } = await import(`../../server/utils/${'monzo'}.ts`)
+          redirect = await beginAuthorisation({}, { monzoClientId: 'oauth2client_test', monzoClientSecret: 'mnzconf.secret' })
+        }
+        finally {
+          vi.unstubAllGlobals()
+        }
+      })
+      s.Then('the Monzo authorisation flow begins', () => {
+        const url = new URL(redirect)
+        expect(url.host).toBe('auth.monzo.com')
+        expect(url.searchParams.get('client_id')).toBe('oauth2client_test')
+        expect(url.searchParams.get('redirect_uri')).toBe('https://wedding.test/api/admin/monzo/callback')
+        expect(url.searchParams.get('state')).toBeTruthy()
+        expect(stored.secure?.monzoState).toBe(url.searchParams.get('state'))
+      })
+    })
+
+    r.RuleScenario('Allocation portal reachable', (s) => {
+      let hrefs: (string | undefined)[] = []
+      s.Given('an admin in the admin area', () => {})
+      s.When('the admin opens the admin navigation', async () => {
+        const layout = (await import('../../app/layouts/admin.vue')).default
+        const wrapper = await mountSuspended(layout)
+        hrefs = wrapper.findAll('nav a').map(link => link.attributes('href'))
+      })
+      s.Then('the room allocation portal is listed alongside the existing admin pages', () => {
+        expect(hrefs).toContain('/admin/seating')
+        expect(hrefs).toContain('/admin/rooms')
+        expect(hrefs).toContain('/admin/payments')
+      })
+    })
+  })
+
   f.Rule('Save-the-date responses in admin', (r) => {
     const seedResponse = async (db: Db, over: Record<string, unknown>) => {
       const { saveResponse } = await import('../../server/utils/save-the-date')

@@ -41,6 +41,10 @@ export default defineNuxtConfig({
     adminPassword: process.env.NUXT_ADMIN_PASSWORD ?? '',
     // bearer auth for the nightly backup fetch
     backupSecret: process.env.NUXT_BACKUP_SECRET ?? '',
+    // Monzo OAuth client for admin-triggered payment reconciliation; unset = the
+    // payments page reports itself unavailable. No Monzo token is ever stored.
+    monzoClientId: process.env.NUXT_MONZO_CLIENT_ID ?? '',
+    monzoClientSecret: process.env.NUXT_MONZO_CLIENT_SECRET ?? '',
     // defaults to local file when unset
     dbUrl: process.env.NUXT_DB_URL ?? '',
     dbAuthToken: process.env.NUXT_DB_AUTH_TOKEN ?? '',

@@ -1,6 +1,6 @@
 @guest-admin
 Feature: Guest admin
-  Dashboard, party management, RSVP/food/room editing, CSV import, settings, payment tracking, and save-the-date responses.
+  Dashboard, party management, RSVP/food/room editing, CSV import, settings, payment status, reconciliation, and save-the-date responses.
 
   @req:dashboard-with-response-overview
   Rule: Dashboard with response overview
@@ -109,6 +109,39 @@ Feature: Guest admin
       Given a party that has booked rooms but has no amount recorded
       When the admin views that party
       Then the amount paid shows as zero against their computed total
+
+  @req:payment-status-per-party-on-the-dashboard
+  Rule: Payment status per party on the dashboard
+    Owed, paid, and the shortfall for every party that booked rooms.
+
+    Scenario: Outstanding balance shown
+      Given a party that owes more than it has paid
+      When the admin opens the dashboard
+      Then the dashboard shows its owed amount, its paid amount, and the shortfall
+
+    Scenario: Settled party not chased
+      Given a party that has paid its full room total
+      When the admin opens the dashboard
+      Then it is not listed among the parties with an outstanding balance
+
+    Scenario: Party with no rooms omitted
+      Given a party that booked no rooms
+      When the admin opens the dashboard
+      Then it carries no payment status
+
+  @req:reconciliation-reachable-from-the-admin
+  Rule: Reconciliation reachable from the admin
+    The check and the allocation portal are both reachable from the admin area.
+
+    Scenario: Reconciliation started from the dashboard
+      Given an admin on the dashboard
+      When the admin chooses to check payments
+      Then the Monzo authorisation flow begins
+
+    Scenario: Allocation portal reachable
+      Given an admin in the admin area
+      When the admin opens the admin navigation
+      Then the room allocation portal is listed alongside the existing admin pages
 
   @req:save-the-date-responses-in-admin
   Rule: Save-the-date responses in admin

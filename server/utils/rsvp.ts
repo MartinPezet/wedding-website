@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm'
+import { eq, inArray } from 'drizzle-orm'
 import type { RoomChoice, RoomNight } from '#shared/content'
 import { ROOM_CHOICES, ROOM_NIGHTS } from '#shared/utils/rooms'
 import { normalisePhone } from '#shared/utils/phone'
@@ -132,7 +132,10 @@ export async function saveRsvp(db: Db, partyId: number, submission: RsvpSubmissi
     }).where(eq(guests.id, answer.id))
   }
 
-  // a submit carries the party's whole room set — replace rather than append
+  // a submit carries the party's whole room set — replace rather than append,
+  // releasing anyone paired with a room that is about to disappear
+  const replaced = db.select({ id: roomRequests.id }).from(roomRequests).where(eq(roomRequests.partyId, partyId))
+  await db.update(roomRequests).set({ pairedWithId: null }).where(inArray(roomRequests.pairedWithId, replaced))
   await db.delete(roomRequests).where(eq(roomRequests.partyId, partyId))
   if (checked.rooms.length) {
     await db.insert(roomRequests).values(checked.rooms)

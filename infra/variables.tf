@@ -43,6 +43,20 @@ variable "nuxt_backup_secret" {
   sensitive   = true
 }
 
+variable "nuxt_monzo_client_id" {
+  description = "Monzo OAuth client id for payment reconciliation; empty leaves the payments page unavailable"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "nuxt_monzo_client_secret" {
+  description = "Monzo OAuth client secret for payment reconciliation"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
 variable "turso_database_url" {
   type      = string
   sensitive = true

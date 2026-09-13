@@ -5,6 +5,7 @@ import { COURSE_FIELDS } from '#shared/utils/menu'
 import { ROOM_CHOICES, ROOM_NIGHTS, roomTotal } from '#shared/utils/rooms'
 import { guests, parties, roomRequests, settings } from '../db/schema'
 import type { Db } from './db'
+import { amountPaidFor, pennies, recordPayment } from './payments'
 import { generatePartyToken } from './token'
 
 export interface DashboardStats {
@@ -22,6 +23,8 @@ export interface DashboardStats {
   mealTotals: { id: string, name: string, options: { id: string, name: string, count: number }[] }[]
   /** rooms requested, one entry per night/choice pairing */
   roomTotals: { night: RoomNight, choice: RoomChoice, count: number }[]
+  /** parties that booked rooms and have not yet paid for them in full */
+  outstandingPayments: { partyId: number, name: string, owed: number, paid: number, shortfall: number }[]
 }
 
 export async function getDashboardStats(db: Db): Promise<DashboardStats> {
@@ -60,12 +63,21 @@ export async function getDashboardStats(db: Db): Promise<DashboardStats> {
     declined: allGuests.filter(guest => guest.attending === false).length,
     mealTotals,
     roomTotals,
+    outstandingPayments: (await getPartyList(db))
+      .map(party => ({
+        partyId: party.id,
+        name: party.name,
+        owed: party.roomTotal,
+        paid: party.amountPaid,
+        shortfall: pennies(party.roomTotal - party.amountPaid),
+      }))
+      .filter(entry => entry.owed > 0 && entry.shortfall > 0),
   }
 }
 
 export async function getPartyList(db: Db) {
   const rows = await db.query.parties.findMany({
-    with: { guests: { orderBy: asc(guests.sortOrder) }, roomRequests: true },
+    with: { guests: { orderBy: asc(guests.sortOrder) }, roomRequests: true, payments: true },
     orderBy: asc(parties.name),
   })
   return rows.map(party => ({
@@ -78,17 +90,26 @@ export async function getPartyList(db: Db) {
     phone: party.guests[0]?.phone ?? null,
     guests: party.guests,
     rooms: party.roomRequests.toSorted((a, b) => a.sortOrder - b.sortOrder),
-    amountPaid: party.amountPaid,
+    /** sum of the party's recorded payments */
+    amountPaid: pennies(party.payments.reduce((total, payment) => total + payment.amount, 0)),
     /** what this party owes for its rooms, priced from the shared rates */
     roomTotal: roomTotal(party.roomRequests),
   }))
 }
 
+/**
+ * The admin's hand-entered total is the override for cash, transfers outside
+ * the link, or a wrong match: the difference is recorded as a manual payment
+ * so the party's payments still sum to exactly what the admin entered.
+ */
 export async function setAmountPaid(db: Db, partyId: number, amount: number) {
   if (!Number.isFinite(amount) || amount < 0) {
     throw createError({ statusCode: 400, message: 'Amount paid must be zero or more.' })
   }
-  await db.update(parties).set({ amountPaid: amount }).where(eq(parties.id, partyId))
+  const difference = pennies(amount - await amountPaidFor(db, partyId))
+  if (difference !== 0) {
+    await recordPayment(db, { partyId, transactionId: null, amount: difference, matchedOn: 'manual' })
+  }
 }
 
 export async function regeneratePartyToken(db: Db, partyId: number) {

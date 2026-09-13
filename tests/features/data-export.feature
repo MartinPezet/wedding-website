@@ -4,8 +4,8 @@ Feature: Data export
 
   @req:venue-excel-export
   Rule: Venue Excel export
-    Attendee sheet with one column per defined course and a course-grouped
-    totals sheet; attending guests only; no phone numbers.
+    Attendee sheet with one column per defined course, a course-grouped totals
+    sheet, and a rooming sheet; attending guests only; no phone numbers.
 
     Scenario: Venue pack downloaded
       Given attending guests with per-course meal choices
@@ -16,6 +16,11 @@ Feature: Data export
       Given guests with stored phone numbers
       When the venue workbook is generated
       Then no sheet contains any phone number column or value
+
+    Scenario: Rooming sheet included
+      Given booked rooms across both nights
+      When the venue workbook is generated
+      Then it contains a rooming sheet with one row per room listing night, occupants, and parties
 
   @req:full-guest-list-export
   Rule: Full guest list export

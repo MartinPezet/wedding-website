@@ -25,6 +25,8 @@ holds the same values only for the one-time bootstrap apply.
 | `NUXT_ADMIN_PASSWORD` | `TF_VAR_nuxt_admin_password` — admin panel | You invent it |
 | `NUXT_SESSION_PASSWORD` | `TF_VAR_nuxt_session_password` — session encryption | 32+ random chars |
 | `BACKUP_SECRET` | Bearer token backup.yml sends to `GET /api/admin/backup`; `TF_VAR_nuxt_backup_secret` | You invent it (32+ random chars) |
+| `MONZO_CLIENT_ID` | `TF_VAR_nuxt_monzo_client_id` — payment reconciliation OAuth client (optional) | developers.monzo.com client, redirect URL `<site>/api/admin/monzo/callback` |
+| `MONZO_CLIENT_SECRET` | `TF_VAR_nuxt_monzo_client_secret` — pair of the above | Same Monzo client |
 | `SITE_URL` | Base URL backup.yml fetches from | `terraform output amplify_default_domain` |
 
 ## Amplify runtime environment variables
@@ -48,6 +50,8 @@ the `environment_variables` map.
 | `NUXT_ADMIN_PASSWORD` | Admin panel password | `nuxt_admin_password` |
 | `NUXT_SESSION_PASSWORD` | nuxt-auth-utils session encryption (32+ chars) | `nuxt_session_password` |
 | `NUXT_BACKUP_SECRET` | Accepts the backup bearer token | `nuxt_backup_secret` |
+| `NUXT_MONZO_CLIENT_ID` | Monzo OAuth client id; blank leaves payment reconciliation unavailable | `nuxt_monzo_client_id` |
+| `NUXT_MONZO_CLIENT_SECRET` | Monzo OAuth client secret. Access tokens are never stored — each check is authorised afresh | `nuxt_monzo_client_secret` |
 | `NUXT_DB_URL` | Turso libSQL URL | `turso_database_url` |
 | `NUXT_DB_AUTH_TOKEN` | Turso auth token | `turso_auth_token` |
 | `AMPLIFY_BUILD` | Selects the Nitro `aws-amplify` preset at build | (constant `1`) |

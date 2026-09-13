@@ -107,7 +107,8 @@ const seedRooms = async (
   const { eq } = await import('drizzle-orm')
   const party = await db.query.parties.findFirst({ where: eq(parties.name, partyName) })
   await db.insert(roomRequests).values(rooms.map((room, index) => ({ ...room, partyId: party!.id, sortOrder: index })))
-  await db.update(parties).set({ amountPaid }).where(eq(parties.id, party!.id))
+  const { setAmountPaid } = await import('../../server/utils/admin')
+  await setAmountPaid(db, party!.id, amountPaid)
 }
 
 const seedResponse = async (db: Db, over: Record<string, unknown>) => {
@@ -216,6 +217,29 @@ describeFeature(feature, (f) => {
         }
       })
     })
+
+    r.RuleScenario('Rooming sheet included', (s) => {
+      let db: Db
+      let workbook: ExcelJS.Workbook
+      s.Given('booked rooms across both nights', async () => {
+        db = await freshDb()
+        await mixedSeed(db)
+      })
+      s.When('the venue workbook is generated', async () => {
+        const { buildVenueWorkbook } = await exportUtil()
+        workbook = await loadWorkbook(await buildVenueWorkbook(db))
+      })
+      s.Then('it contains a rooming sheet with one row per room listing night, occupants, and parties', () => {
+        const text = sheetText(workbook, 'Rooming')
+        // header + The Fulls' own room on the night of + their named share the night before
+        expect(workbook.getWorksheet('Rooming')!.rowCount).toBe(3)
+        expect(text).toMatch(/night before/i)
+        expect(text).toMatch(/night of/i)
+        for (const value of ['Amy Full', 'Kid Full', 'Jo Jones', 'The Fulls']) {
+          expect(text).toContain(value)
+        }
+      })
+    })
   })
 
   f.Rule('Full guest list export', (r) => {
@@ -315,7 +339,7 @@ describeFeature(feature, (f) => {
         path: '/api/admin/backup',
         headers: { authorization: 'Bearer backup-secret' },
       }
-      let dump: { parties: unknown[], guests: unknown[], settings: unknown[], roomRequests: unknown[] }
+      let dump: { parties: unknown[], guests: unknown[], settings: unknown[], saveTheDateResponses: unknown[], roomRequests: unknown[], payments: unknown[] }
       s.Given('the correct bearer secret', async () => {
         db = await freshDb()
         await mixedSeed(db)
@@ -332,6 +356,9 @@ describeFeature(feature, (f) => {
         expect(dump.parties[0]).toMatchObject({ name: expect.any(String), token: expect.any(String) })
         expect(dump.saveTheDateResponses).toMatchObject([{ name: 'The Windsors', phone: '+447911123456' }])
         expect(dump.roomRequests).toHaveLength(2)
+        expect(dump.roomRequests[0]).toHaveProperty('pairedWithId')
+        // the hand-entered £100 lives on as a manual payment row
+        expect(dump.payments).toMatchObject([{ amount: 100, transactionId: null, matchedOn: 'manual' }])
       })
     })
 

@@ -4,6 +4,7 @@ import { COURSE_FIELDS } from '#shared/utils/menu'
 import { ROOM_CHOICE_LABELS, ROOM_NIGHTS, ROOM_NIGHT_LABELS } from '#shared/utils/rooms'
 import type { Db } from './db'
 import { getPartyList } from './admin'
+import { roomingView } from './allocation'
 import { listResponses } from './save-the-date'
 
 type PartyRow = Awaited<ReturnType<typeof getPartyList>>[number]
@@ -85,6 +86,26 @@ export async function buildVenueWorkbook(db: Db): Promise<Uint8Array> {
     }
   }
   styleHeader(totals)
+
+  // one row per room; a match-me request still without a partner is flagged
+  const rooming = workbook.addWorksheet('Rooming')
+  rooming.columns = [
+    { header: 'Night', key: 'night', width: 26 },
+    { header: 'Room', key: 'room', width: 30 },
+    { header: 'Occupants', key: 'occupants', width: 40 },
+    { header: 'Parties', key: 'parties', width: 36 },
+    { header: 'Status', key: 'status', width: 14 },
+  ]
+  for (const room of await roomingView(db)) {
+    rooming.addRow({
+      night: ROOM_NIGHT_LABELS[room.night],
+      room: room.kind === 'own' ? ROOM_CHOICE_LABELS.our_room : room.kind === 'named_share' ? ROOM_CHOICE_LABELS.share_named : ROOM_CHOICE_LABELS.share_match,
+      occupants: room.occupants.join(' & '),
+      parties: room.parties.join(', '),
+      status: room.kind === 'awaiting_partner' ? 'Unallocated' : '',
+    })
+  }
+  styleHeader(rooming)
 
   return new Uint8Array(await workbook.xlsx.writeBuffer())
 }

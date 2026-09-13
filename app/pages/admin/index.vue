@@ -107,6 +107,32 @@ const statCards = computed(() => [
       </div>
     </div>
 
+    <div class="mt-6 flex flex-wrap items-center gap-3">
+      <h2 class="font-display text-xl text-ink">Outstanding payments</h2>
+      <div class="ms-auto flex flex-wrap gap-3 text-sm">
+        <NuxtLink to="/admin/payments" class="rounded-full border border-leaf/40 px-4 py-1.5 text-leaf-deep hover:border-petal">
+          Payments
+        </NuxtLink>
+        <a href="/api/admin/monzo/authorise" class="rounded-full bg-leaf-deep px-4 py-1.5 text-cream hover:bg-leaf">
+          Check payments with Monzo
+        </a>
+      </div>
+    </div>
+    <ul class="mt-2 flex flex-col gap-2" data-testid="outstanding-payments">
+      <li
+        v-for="entry in stats?.outstandingPayments ?? []"
+        :key="entry.partyId"
+        class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-ink/10 bg-white/70 px-3 py-2 text-sm"
+      >
+        <NuxtLink :to="`/admin/parties/${entry.partyId}`" class="font-semibold text-ink hover:text-petal">{{ entry.name }}</NuxtLink>
+        <span class="text-ink/70">
+          Owes £{{ entry.owed }} · paid £{{ entry.paid }} ·
+          <span class="font-semibold text-petal-deep">£{{ entry.shortfall }} short</span>
+        </span>
+      </li>
+    </ul>
+    <p v-if="!stats?.outstandingPayments?.length" class="mt-2 text-sm text-ink/60">Every booked room is paid for.</p>
+
     <div class="mt-8 flex flex-wrap items-center gap-3">
       <h2 class="font-display text-xl text-ink">Parties</h2>
       <label class="ms-auto flex items-center gap-2 text-sm text-leaf-deep">
