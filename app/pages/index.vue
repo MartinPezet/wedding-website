@@ -16,10 +16,11 @@
       <NuxtImg
         src="/photos/hero.jpg"
         alt="Ciera and Martin"
-        width="960"
-        height="1200"
-        sizes="256px sm:320px"
-        class="h-auto w-full object-cover"
+        width="1417"
+        height="1264"
+        sizes="320px sm:408px md:816px"
+        loading="eager"
+        class="aspect-[4/5] h-auto w-full object-cover"
       />
     </FloralArch>
 

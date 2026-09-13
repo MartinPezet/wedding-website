@@ -19,7 +19,8 @@ useSeoMeta({
         alt="Ciera and Martin"
         width="960"
         height="960"
-        sizes="192px sm:224px"
+        sizes="368px sm:576px md:736"
+        loading="eager"
         class="aspect-square h-auto w-full object-cover"
       />
     </FloralArch>
