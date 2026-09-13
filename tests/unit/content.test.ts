@@ -14,24 +14,28 @@ describe('venue.json', () => {
 })
 
 describe('schedule.json', () => {
-  it('has at least one event with name, times, location, and maps link', () => {
+  it('has at least one event with name, start time, and location', () => {
     expect(schedule.length).toBeGreaterThan(0)
     for (const event of schedule) {
       expect(event.name).toBeTruthy()
       expect(event.start).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/)
-      expect(event.end).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/)
-      expect(new Date(event.end).getTime()).toBeGreaterThan(new Date(event.start).getTime())
+      // a room within the venue is enough — the venue itself lives in venue.json
       expect(event.location).toBeTruthy()
-      expect(event.mapsUrl).toMatch(/^https:\/\//)
+      // end time and maps link are optional, but never present-and-empty: an
+      // empty end once produced an invalid DTEND in the calendar download
+      if ('end' in event) {
+        expect(event.end).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/)
+        expect(new Date(event.end!).getTime()).toBeGreaterThan(new Date(event.start).getTime())
+      }
+      if ('mapsUrl' in event) expect(event.mapsUrl).toMatch(/^https:\/\//)
     }
   })
 
-  it('runs on the booked date at the booked venue', () => {
-    // wedding day is 2027-01-16; late events (carriages) roll into the small hours of the 17th
+  it('runs on the booked date', () => {
+    // wedding day is 2027-01-16; the bar, breakfast and checkout roll into the 17th
     expect(schedule[0]!.start.startsWith('2027-01-16')).toBe(true)
     for (const event of schedule) {
       expect(event.start).toMatch(/^2027-01-1[67]T/)
-      expect(event.location).toContain(venue.name)
     }
   })
 })
@@ -76,9 +80,9 @@ describe('faq.json', () => {
 })
 
 describe('gifts.json', () => {
-  it('has a honeymoon fund message and external link', () => {
+  it('has a gift message and no fund link', () => {
     expect(gifts.message).toBeTruthy()
-    expect(gifts.url).toMatch(/^https:\/\//)
-    expect(gifts.linkText).toBeTruthy()
+    expect(gifts).not.toHaveProperty('url')
+    expect(gifts).not.toHaveProperty('linkText')
   })
 })

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { menu } from '#shared/content'
-import type { MenuCourse } from '#shared/content'
+import type { MenuCourse, RoomChoice, RoomNight } from '#shared/content'
 
 definePageMeta({ layout: 'admin' })
 useSeoMeta({ title: 'Edit party — Wedding HQ', robots: 'noindex' })
@@ -17,6 +17,13 @@ interface AdminGuest {
   dietaryNotes: string | null
 }
 
+interface AdminRoom {
+  night: RoomNight
+  choice: RoomChoice
+  shareWith: string | null
+  occupants: number
+}
+
 interface AdminParty {
   id: number
   name: string
@@ -26,6 +33,9 @@ interface AdminParty {
   noteToCouple: string | null
   phone: string | null
   guests: AdminGuest[]
+  rooms: AdminRoom[]
+  amountPaid: number
+  roomTotal: number
 }
 
 const route = useRoute()
@@ -57,6 +67,8 @@ const answers = ref<AnswerRow[]>([])
 const phone = ref('')
 const song = ref('')
 const note = ref('')
+const roomRows = ref<AdminRoom[]>([])
+const amountPaid = ref(0)
 
 function load() {
   const current = party.value
@@ -81,11 +93,17 @@ function load() {
   phone.value = current.phone ?? ''
   song.value = current.songRequest ?? ''
   note.value = current.noteToCouple ?? ''
+  roomRows.value = current.rooms.map(room => ({ ...room, shareWith: room.shareWith ?? '' }))
+  amountPaid.value = current.amountPaid ?? 0
 }
 watch(party, load, { immediate: true })
 
 const courseField = (course: MenuCourse) => COURSE_FIELDS[course.id]
 const mealsFor = (course: MenuCourse, row: AnswerRow) => optionsFor(course, row.isChild)
+
+const addRoom = () => roomRows.value.push({ night: 'of', choice: 'our_room', shareWith: '', occupants: 1 })
+const removeRoom = (index: number) => roomRows.value.splice(index, 1)
+const liveRoomTotal = computed(() => roomTotal(roomRows.value))
 
 // typed-route inference overflows (TS2321) on dynamic URLs now the API has grown; erase it here
 const rawFetch = $fetch as (url: string, opts?: { method?: string, body?: unknown }) => Promise<unknown>
@@ -126,25 +144,48 @@ const saveDetails = () => call(() => rawFetch(`/api/admin/parties/${partyId}`, {
   },
 }), 'Party details saved.')
 
-const saveAnswers = () => call(() => rawFetch(`/api/admin/parties/${partyId}/rsvp`, {
+const saveAnswers = async () => {
+  await call(() => rawFetch(`/api/admin/parties/${partyId}/rsvp`, {
+    method: 'PUT',
+    body: {
+      phone: phone.value || undefined,
+      songRequest: song.value || undefined,
+      noteToCouple: note.value || undefined,
+      guests: answers.value
+        .filter(row => row.attending !== '')
+        .map(row => ({
+          id: row.id,
+          attending: row.attending === 'yes',
+        })),
+      rooms: roomRows.value.map(room => ({
+        night: room.night,
+        choice: room.choice,
+        shareWith: room.choice === 'share_named' ? room.shareWith : null,
+        occupants: room.occupants,
+      })),
+    },
+  }), 'RSVP answers saved.')
+  if (!error.value) {
+    await call(() => rawFetch(`/api/admin/parties/${partyId}`, {
+      method: 'PATCH',
+      body: { amountPaid: Number(amountPaid.value) || 0 },
+    }), 'RSVP answers saved.')
+  }
+}
+
+// meals live behind the food-choice page and save separately, matching the two guest pages
+const saveFoodAnswers = () => call(() => rawFetch(`/api/admin/parties/${partyId}/food`, {
   method: 'PUT',
   body: {
-    phone: phone.value || undefined,
-    songRequest: song.value || undefined,
-    noteToCouple: note.value || undefined,
     guests: answers.value
-      .filter(row => row.attending !== '')
+      .filter(row => row.attending === 'yes')
       .map(row => ({
         id: row.id,
-        attending: row.attending === 'yes',
-        ...Object.fromEntries(menu.courses.map(course => [
-          courseField(course),
-          row.attending === 'yes' ? row[courseField(course)] : undefined,
-        ])),
+        ...Object.fromEntries(menu.courses.map(course => [courseField(course), row[courseField(course)]])),
         dietaryNotes: row.dietaryNotes || undefined,
       })),
   },
-}), 'RSVP answers saved.')
+}), 'Food answers saved.')
 
 const regenerateToken = () => {
   if (!confirm('Regenerate the token? The old RSVP link and QR code will stop working.')) return
@@ -212,29 +253,37 @@ const fieldClass = 'rounded-lg border border-leaf/40 bg-white/70 px-3 py-1.5 tex
             <option value="yes">Attending</option>
             <option value="no">Declined</option>
           </select>
-          <template v-if="row.attending === 'yes'">
-            <select
-              v-for="course in menu.courses"
-              :key="course.id"
-              v-model="row[courseField(course)]"
-              :name="`meal-${course.id}-${row.id}`"
-              required
-              :class="fieldClass"
-            >
-              <option value="" disabled>Choose a {{ course.name.toLowerCase() }}</option>
-              <option v-for="option in mealsFor(course, row)" :key="option.id" :value="option.id">{{ option.name }}</option>
-            </select>
-          </template>
-          <input
-            v-if="row.attending === 'yes'"
-            v-model="row.dietaryNotes"
-            :name="`dietary-${row.id}`"
-            placeholder="Dietary notes"
-            class="min-w-40 grow"
-            :class="fieldClass"
-          >
         </div>
       </div>
+
+      <h3 class="font-display text-lg text-ink">Rooms</h3>
+      <div v-for="(room, index) in roomRows" :key="index" class="flex flex-wrap items-center gap-2">
+        <select v-model="room.night" :name="`room-${index}-night`" :class="fieldClass">
+          <option v-for="night in ROOM_NIGHTS" :key="night" :value="night">{{ ROOM_NIGHT_LABELS[night] }}</option>
+        </select>
+        <select v-model="room.choice" :name="`room-${index}-choice`" :class="fieldClass">
+          <option v-for="choice in ROOM_CHOICES" :key="choice" :value="choice">{{ ROOM_CHOICE_LABELS[choice] }}</option>
+        </select>
+        <select v-if="room.choice === 'our_room'" v-model.number="room.occupants" :name="`room-${index}-occupants`" :class="fieldClass">
+          <option :value="1">1 guest</option>
+          <option :value="2">2 guests</option>
+        </select>
+        <input
+          v-if="room.choice === 'share_named'"
+          v-model="room.shareWith"
+          :name="`room-${index}-share`"
+          placeholder="Sharing with"
+          class="min-w-40 grow"
+          :class="fieldClass"
+        >
+        <span class="text-sm text-ink/60">£{{ roomPrice(room.night, room.choice, room.occupants) }}</span>
+        <button type="button" class="text-sm text-petal-deep" @click="removeRoom(index)">Remove</button>
+      </div>
+      <button type="button" class="self-start text-sm text-leaf-deep underline" @click="addRoom">+ Add room</button>
+      <label class="flex flex-col gap-1 text-sm text-leaf-deep">
+        Amount paid (owes £{{ liveRoomTotal }})
+        <input v-model.number="amountPaid" name="amountPaid" type="number" min="0" step="1" class="w-40" :class="fieldClass">
+      </label>
       <label class="flex flex-col gap-1 text-sm text-leaf-deep">
         Contact phone
         <input v-model="phone" name="phone" type="tel" :class="fieldClass">
@@ -248,6 +297,40 @@ const fieldClass = 'rounded-lg border border-leaf/40 bg-white/70 px-3 py-1.5 tex
         <textarea v-model="note" name="note" rows="2" :class="fieldClass" />
       </label>
       <button type="submit" class="self-start rounded-full bg-leaf-deep px-5 py-2 text-cream hover:bg-leaf">Save answers</button>
+    </form>
+
+    <!-- food answers: edited separately, matching the guest-facing menu page -->
+    <form class="mt-6 flex flex-col gap-3 rounded-xl border border-ink/10 bg-white/70 p-4" @submit.prevent="saveFoodAnswers">
+      <h2 class="font-display text-xl text-ink">Food answers</h2>
+      <p v-if="!answers.some(row => row.attending === 'yes')" class="text-sm text-ink/60">
+        No attending guests yet — meals are only asked of guests who are coming.
+      </p>
+      <template v-for="row in answers" :key="row.id">
+        <div v-if="row.attending === 'yes'" class="rounded-lg border border-ink/10 p-3">
+          <p class="font-semibold text-ink">{{ row.name }}</p>
+          <div class="mt-2 flex flex-wrap items-center gap-2">
+            <select
+              v-for="course in menu.courses"
+              :key="course.id"
+              v-model="row[courseField(course)]"
+              :name="`meal-${course.id}-${row.id}`"
+              required
+              :class="fieldClass"
+            >
+              <option value="" disabled>Choose a {{ course.name.toLowerCase() }}</option>
+              <option v-for="option in mealsFor(course, row)" :key="option.id" :value="option.id">{{ option.name }}</option>
+            </select>
+            <input
+              v-model="row.dietaryNotes"
+              :name="`dietary-${row.id}`"
+              placeholder="Dietary notes"
+              class="min-w-40 grow"
+              :class="fieldClass"
+            >
+          </div>
+        </div>
+      </template>
+      <button type="submit" class="self-start rounded-full bg-leaf-deep px-5 py-2 text-cream hover:bg-leaf">Save food answers</button>
     </form>
 
     <!-- link & danger zone -->

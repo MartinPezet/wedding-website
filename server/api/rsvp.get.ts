@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm'
 import { parties } from '../db/schema'
-import { getDeadline } from '../utils/rsvp'
+import { getDeadline, getPaymentDeadline, getRoomRequests } from '../utils/rsvp'
 
 export default defineEventHandler(async (event) => {
   const session = await getUserSession(event)
@@ -15,10 +15,13 @@ export default defineEventHandler(async (event) => {
         with: { guests: { orderBy: (guests, { asc }) => asc(guests.sortOrder) } },
       })
     : undefined
-  if (!party) return { party: null, guests: [], phone: null, deadline: null, locked: false }
+  if (!party) {
+    return { partyId: null, party: null, guests: [], rooms: [], phone: null, deadline: null, paymentDeadline: null, locked: false }
+  }
 
   const deadline = await getDeadline(db)
   return {
+    partyId: party.id,
     party: {
       name: party.name,
       songRequest: party.songRequest,
@@ -30,13 +33,16 @@ export default defineEventHandler(async (event) => {
       name: guest.name,
       isChild: guest.isChild,
       attending: guest.attending,
-      starterChoiceId: guest.starterChoiceId,
-      mainChoiceId: guest.mainChoiceId,
-      dessertChoiceId: guest.dessertChoiceId,
-      dietaryNotes: guest.dietaryNotes,
+    })),
+    rooms: (await getRoomRequests(db, party.id)).map(room => ({
+      night: room.night,
+      choice: room.choice,
+      shareWith: room.shareWith,
+      occupants: room.occupants,
     })),
     phone: party.guests[0]?.phone ?? null,
     deadline: deadline ?? null,
+    paymentDeadline: await getPaymentDeadline(db) ?? null,
     locked: Boolean(deadline && Date.now() > Date.parse(deadline)),
   }
 })

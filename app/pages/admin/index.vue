@@ -19,6 +19,8 @@ interface AdminParty {
   respondedAt: string | null
   phone: string | null
   guests: AdminGuest[]
+  amountPaid: number
+  roomTotal: number
 }
 
 const { data: stats } = await useFetch('/api/admin/stats')
@@ -50,6 +52,14 @@ async function copyLink(party: AdminParty) {
   copied.value = party.id
   setTimeout(() => { copied.value = 0 }, 1500)
 }
+
+const roomCards = computed(() =>
+  ROOM_NIGHTS.map(night => ({
+    night,
+    label: ROOM_NIGHT_LABELS[night],
+    choices: (stats.value?.roomTotals ?? []).filter(entry => entry.night === night),
+  })),
+)
 
 const statCards = computed(() => [
   { label: 'Invited', value: stats.value?.invited ?? 0 },
@@ -83,6 +93,45 @@ const statCards = computed(() => [
         </ul>
       </div>
     </div>
+
+    <h2 class="mt-6 font-display text-xl text-ink">Rooms requested</h2>
+    <div class="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2" data-testid="room-totals">
+      <div v-for="card in roomCards" :key="card.night" class="rounded-lg border border-ink/10 bg-white/70 p-3">
+        <p class="text-xs uppercase tracking-widest text-leaf-deep">{{ card.label }}</p>
+        <ul class="mt-2 space-y-1 text-sm">
+          <li v-for="entry in card.choices" :key="entry.choice" class="flex justify-between gap-2">
+            <span class="text-ink">{{ ROOM_CHOICE_LABELS[entry.choice] }}</span>
+            <span class="font-semibold text-petal-deep">{{ entry.count }}</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="mt-6 flex flex-wrap items-center gap-3">
+      <h2 class="font-display text-xl text-ink">Outstanding payments</h2>
+      <div class="ms-auto flex flex-wrap gap-3 text-sm">
+        <NuxtLink to="/admin/payments" class="rounded-full border border-leaf/40 px-4 py-1.5 text-leaf-deep hover:border-petal">
+          Payments
+        </NuxtLink>
+        <a href="/api/admin/monzo/authorise" class="rounded-full bg-leaf-deep px-4 py-1.5 text-cream hover:bg-leaf">
+          Check payments with Monzo
+        </a>
+      </div>
+    </div>
+    <ul class="mt-2 flex flex-col gap-2" data-testid="outstanding-payments">
+      <li
+        v-for="entry in stats?.outstandingPayments ?? []"
+        :key="entry.partyId"
+        class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-ink/10 bg-white/70 px-3 py-2 text-sm"
+      >
+        <NuxtLink :to="`/admin/parties/${entry.partyId}`" class="font-semibold text-ink hover:text-petal">{{ entry.name }}</NuxtLink>
+        <span class="text-ink/70">
+          Owes £{{ entry.owed }} · paid £{{ entry.paid }} ·
+          <span class="font-semibold text-petal-deep">£{{ entry.shortfall }} short</span>
+        </span>
+      </li>
+    </ul>
+    <p v-if="!stats?.outstandingPayments?.length" class="mt-2 text-sm text-ink/60">Every booked room is paid for.</p>
 
     <div class="mt-8 flex flex-wrap items-center gap-3">
       <h2 class="font-display text-xl text-ink">Parties</h2>
@@ -127,6 +176,9 @@ const statCards = computed(() => [
           <button type="button" class="text-petal-deep hover:text-petal" @click="copyLink(party)">
             {{ copied === party.id ? 'Copied!' : 'Copy RSVP link' }}
           </button>
+          <span v-if="party.roomTotal" class="text-ink/70" data-testid="party-payment">
+            Rooms £{{ party.roomTotal }} · paid £{{ party.amountPaid }}
+          </span>
         </div>
       </li>
     </ul>

@@ -17,6 +17,8 @@ async function logout() {
           <NuxtLink to="/admin" class="hover:text-petal" exact-active-class="text-petal-deep">Dashboard</NuxtLink>
           <NuxtLink to="/admin/save-the-date" class="hover:text-petal" exact-active-class="text-petal-deep">Save the date</NuxtLink>
           <NuxtLink to="/admin/seating" class="hover:text-petal" exact-active-class="text-petal-deep">Seating</NuxtLink>
+          <NuxtLink to="/admin/rooms" class="hover:text-petal" exact-active-class="text-petal-deep">Rooms</NuxtLink>
+          <NuxtLink to="/admin/payments" class="hover:text-petal" exact-active-class="text-petal-deep">Payments</NuxtLink>
           <NuxtLink to="/admin/print" class="hover:text-petal" active-class="text-petal-deep">Print</NuxtLink>
           <NuxtLink to="/admin/import" class="hover:text-petal" exact-active-class="text-petal-deep">Import</NuxtLink>
           <NuxtLink to="/admin/settings" class="hover:text-petal" exact-active-class="text-petal-deep">Settings</NuxtLink>

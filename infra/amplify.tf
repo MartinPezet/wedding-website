@@ -30,6 +30,8 @@ resource "aws_amplify_app" "site" {
     NUXT_ADMIN_PASSWORD   = var.nuxt_admin_password
     NUXT_SESSION_PASSWORD = var.nuxt_session_password
     NUXT_BACKUP_SECRET    = var.nuxt_backup_secret
+    NUXT_MONZO_CLIENT_ID     = var.nuxt_monzo_client_id
+    NUXT_MONZO_CLIENT_SECRET = var.nuxt_monzo_client_secret
     NUXT_DB_URL           = var.turso_database_url
     NUXT_DB_AUTH_TOKEN    = var.turso_auth_token
   }

@@ -1,50 +1,63 @@
 [
   {
+    "name": "Main house check-in",
+    "start": "2027-01-16T12:00",
+    "location": "Reception",
+    "description": "You can arrive from 11:00 and sit in the cocktail bar, then find your room by going to the reception."
+  },
+  {
     "name": "Guests arrive",
-    "start": "2027-01-16T13:30",
-    "end": "2027-01-16T14:00",
-    "location": "St Audries Park, West Quantoxhead, Somerset TA4 4DS",
-    "mapsUrl": "https://maps.google.com/?q=St+Audries+Park+TA4+4DS",
-    "description": "Winter warmers on arrival — find your seat in the orangery."
+    "start": "2027-01-16T12:30",
+    "location": "The Great Hall",
+    "description": "Meet everyone in the great hall and wonder over to find your seat in the orangery."
   },
   {
     "name": "The ceremony",
-    "start": "2027-01-16T14:00",
-    "end": "2027-01-16T15:00",
-    "location": "St Audries Park, West Quantoxhead, Somerset TA4 4DS",
-    "mapsUrl": "https://maps.google.com/?q=St+Audries+Park+TA4+4DS",
-    "description": "Martin & Ciera say their vows beneath the floral arch."
+    "start": "2027-01-16T13:30",
+    "location": "The Orangery",
+    "description": "Martin & Ciera say their vows in front of their nearest and dearest."
   },
   {
-    "name": "Mulled wine & canapés",
-    "start": "2027-01-16T15:00",
-    "end": "2027-01-16T17:30",
-    "location": "St Audries Park, West Quantoxhead, Somerset TA4 4DS",
-    "mapsUrl": "https://maps.google.com/?q=St+Audries+Park+TA4+4DS",
-    "description": "Drinks, photographs and confetti on the terrace."
+    "name": "Cocktails & canapés",
+    "start": "2027-01-16T14:30",
+    "location": "The Great Hall",
+    "description": "Drinks, photographs and confetti in the Great Hall."
   },
   {
     "name": "Wedding breakfast",
-    "start": "2027-01-16T17:30",
-    "end": "2027-01-16T20:00",
-    "location": "St Audries Park, West Quantoxhead, Somerset TA4 4DS",
-    "mapsUrl": "https://maps.google.com/?q=St+Audries+Park+TA4+4DS",
+    "start": "2027-01-16T16:30",
+    "location": "The Banquet Hall",
     "description": "A candlelit dinner followed by toasts and speeches."
   },
   {
     "name": "First dance",
     "start": "2027-01-16T20:00",
-    "end": "2027-01-17T00:00",
-    "location": "St Audries Park, West Quantoxhead, Somerset TA4 4DS",
-    "mapsUrl": "https://maps.google.com/?q=St+Audries+Park+TA4+4DS",
+    "location": "The Great Hall",
     "description": "Dancing till late with our favourite people."
   },
   {
-    "name": "Carriages",
-    "start": "2027-01-17T00:00",
-    "end": "2027-01-17T00:30",
-    "location": "St Audries Park, West Quantoxhead, Somerset TA4 4DS",
-    "mapsUrl": "https://maps.google.com/?q=St+Audries+Park+TA4+4DS",
-    "description": "A sparkler send-off. Safe travels home."
+    "name": "Late night snack",
+    "start": "2027-01-16T21:00",
+    "location": "The Great Hall",
+    "description": "Grab a slice of Pizza before getting back to the dance floor."
+  },
+  {
+    "name": "Bar closes",
+    "start": "2027-01-17T01:00",
+    "location": "The Bar",
+    "description": "Buy your bottles and enjoy it by the Great Hall fire. No curfew, head upstairs when you're ready."
+  },
+  {
+    "name": "Breakfast",
+    "start": "2027-01-17T08:30",
+    "end": "2027-01-17T09:15",
+    "location": "The Banquet Hall",
+    "description": "For everyone staying, a full english breakfast will be served in the Banquet Hall."
+  },
+  {
+    "name": "Checkout",
+    "start": "2027-01-17T10:00",
+    "location": "Reception",
+    "description": "Checkout your rooms, hopefully not still drunk. Safe drive home."
   }
 ]

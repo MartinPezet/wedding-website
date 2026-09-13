@@ -22,6 +22,33 @@ export const parties = sqliteTable('parties', {
   updatedAt: text('updated_at'),
 })
 
+// a party's amount paid is the sum of its rows here, so every pound is explainable
+export const payments = sqliteTable('payments', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  partyId: integer('party_id').notNull().references(() => parties.id),
+  /** Monzo's id, unique so a re-run never double-counts; null for hand-entered rows */
+  transactionId: text('transaction_id').unique(),
+  amount: real('amount').notNull(),
+  matchedOn: text('matched_on', { enum: ['reference', 'name', 'amount', 'assigned', 'manual'] }).notNull(),
+  seenAt: text('seen_at').notNull(),
+})
+
+// one row per booked room, per night — the later allocation portal pairs
+// individual share_match rows, which a JSON blob on the party would not allow
+export const roomRequests = sqliteTable('room_requests', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  partyId: integer('party_id').notNull().references(() => parties.id),
+  night: text('night', { enum: ['before', 'of'] }).notNull(),
+  choice: text('choice', { enum: ['our_room', 'share_named', 'share_match'] }).notNull(),
+  /** who they're sharing with — required for share_named, null otherwise */
+  shareWith: text('share_with'),
+  /** own guests in the room; only meaningful for our_room */
+  occupants: integer('occupants').notNull().default(1),
+  sortOrder: integer('sort_order').notNull().default(0),
+  /** the other share_match row in the same room; both rows point at each other */
+  pairedWithId: integer('paired_with_id'),
+})
+
 export const guests = sqliteTable('guests', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   partyId: integer('party_id').notNull().references(() => parties.id),
@@ -66,6 +93,16 @@ export const settings = sqliteTable('settings', {
 
 export const partiesRelations = relations(parties, ({ many }) => ({
   guests: many(guests),
+  roomRequests: many(roomRequests),
+  payments: many(payments),
+}))
+
+export const paymentsRelations = relations(payments, ({ one }) => ({
+  party: one(parties, { fields: [payments.partyId], references: [parties.id] }),
+}))
+
+export const roomRequestsRelations = relations(roomRequests, ({ one }) => ({
+  party: one(parties, { fields: [roomRequests.partyId], references: [parties.id] }),
 }))
 
 export const guestsRelations = relations(guests, ({ one }) => ({

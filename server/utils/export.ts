@@ -1,11 +1,25 @@
 import ExcelJS from 'exceljs'
 import { menu } from '#shared/content'
 import { COURSE_FIELDS } from '#shared/utils/menu'
+import { ROOM_CHOICE_LABELS, ROOM_NIGHTS, ROOM_NIGHT_LABELS } from '#shared/utils/rooms'
 import type { Db } from './db'
 import { getPartyList } from './admin'
+import { roomingView } from './allocation'
 import { listResponses } from './save-the-date'
 
-type GuestRow = Awaited<ReturnType<typeof getPartyList>>[number]['guests'][number]
+type PartyRow = Awaited<ReturnType<typeof getPartyList>>[number]
+type GuestRow = PartyRow['guests'][number]
+
+/** one night's booked rooms as a single cell, e.g. "A room for us (2) · Sharing with Jo Jones" */
+const roomsCell = (party: PartyRow, night: (typeof ROOM_NIGHTS)[number]) =>
+  party.rooms
+    .filter(room => room.night === night)
+    .map(room => room.choice === 'share_named' && room.shareWith
+      ? `Sharing with ${room.shareWith}`
+      : room.choice === 'our_room'
+        ? `${ROOM_CHOICE_LABELS[room.choice]} (${room.occupants})`
+        : ROOM_CHOICE_LABELS[room.choice])
+    .join(' · ')
 
 const allMealOptions = menu.courses.flatMap(course => [...course.options, ...(course.childOptions ?? [])])
 const optionName = (id: string | null) => allMealOptions.find(option => option.id === id)?.name ?? ''
@@ -73,6 +87,26 @@ export async function buildVenueWorkbook(db: Db): Promise<Uint8Array> {
   }
   styleHeader(totals)
 
+  // one row per room; a match-me request still without a partner is flagged
+  const rooming = workbook.addWorksheet('Rooming')
+  rooming.columns = [
+    { header: 'Night', key: 'night', width: 26 },
+    { header: 'Room', key: 'room', width: 30 },
+    { header: 'Occupants', key: 'occupants', width: 40 },
+    { header: 'Parties', key: 'parties', width: 36 },
+    { header: 'Status', key: 'status', width: 14 },
+  ]
+  for (const room of await roomingView(db)) {
+    rooming.addRow({
+      night: ROOM_NIGHT_LABELS[room.night],
+      room: room.kind === 'own' ? ROOM_CHOICE_LABELS.our_room : room.kind === 'named_share' ? ROOM_CHOICE_LABELS.share_named : ROOM_CHOICE_LABELS.share_match,
+      occupants: room.occupants.join(' & '),
+      parties: room.parties.join(', '),
+      status: room.kind === 'awaiting_partner' ? 'Unallocated' : '',
+    })
+  }
+  styleHeader(rooming)
+
   return new Uint8Array(await workbook.xlsx.writeBuffer())
 }
 
@@ -92,6 +126,9 @@ export async function buildFullWorkbook(db: Db): Promise<Uint8Array> {
     { header: 'Dietary notes', key: 'dietary', width: 32 },
     { header: 'Song request', key: 'song', width: 28 },
     { header: 'Note to couple', key: 'note', width: 40 },
+    ...ROOM_NIGHTS.map(night => ({ header: ROOM_NIGHT_LABELS[night], key: `rooms-${night}`, width: 36 })),
+    { header: 'Room total', key: 'roomTotal', width: 12 },
+    { header: 'Amount paid', key: 'amountPaid', width: 12 },
   ]
   for (const party of parties) {
     for (const guest of party.guests) {
@@ -106,6 +143,9 @@ export async function buildFullWorkbook(db: Db): Promise<Uint8Array> {
         dietary: guest.dietaryNotes ?? '',
         song: party.songRequest ?? '',
         note: party.noteToCouple ?? '',
+        ...Object.fromEntries(ROOM_NIGHTS.map(night => [`rooms-${night}`, roomsCell(party, night)])),
+        roomTotal: party.roomTotal,
+        amountPaid: party.amountPaid,
       })
     }
   }

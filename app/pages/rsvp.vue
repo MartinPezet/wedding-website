@@ -1,22 +1,23 @@
 <script setup lang="ts">
-import { menu } from "#shared/content";
-import type { MenuCourse } from "#shared/content";
+import { rooms as roomContent } from "#shared/content";
+import type { RoomChoice, RoomNight } from "#shared/content";
 
 interface GuestForm {
   id: number;
   name: string;
   isChild: boolean;
   attending: "" | "yes" | "no";
-  starterChoiceId: string;
-  mainChoiceId: string;
-  dessertChoiceId: string;
-  dietaryNotes: string;
+}
+
+interface RoomForm {
+  choice: RoomChoice | "";
+  shareWith: string;
 }
 
 const { data } = await useFetch("/api/rsvp");
 
 const guests = ref<GuestForm[]>([]);
-const phone = ref("");
+const bookedRooms = ref<Record<RoomNight, RoomForm[]>>({ before: [], of: [] });
 const song = ref("");
 const note = ref("");
 const submitted = ref(false);
@@ -29,47 +30,97 @@ if (data.value?.party) {
     name: guest.name,
     isChild: guest.isChild,
     attending: guest.attending === null ? "" : guest.attending ? "yes" : "no",
-    starterChoiceId: guest.starterChoiceId ?? "",
-    mainChoiceId: guest.mainChoiceId ?? "",
-    dessertChoiceId: guest.dessertChoiceId ?? "",
-    dietaryNotes: guest.dietaryNotes ?? "",
   }));
-  phone.value = data.value.phone ?? "";
+  for (const room of data.value.rooms) {
+    bookedRooms.value[room.night].push({
+      choice: room.choice,
+      shareWith: room.shareWith ?? "",
+    });
+  }
   song.value = data.value.party.songRequest ?? "";
   note.value = data.value.party.noteToCouple ?? "";
 }
 
-const allMealOptions = menu.courses.flatMap((course) => [
-  ...course.options,
-  ...(course.childOptions ?? []),
-]);
-const optionName = (id: string) =>
-  allMealOptions.find((option) => option.id === id)?.name;
+const attendingCount = computed(
+  () => guests.value.filter((guest) => guest.attending === "yes").length,
+);
+const anyAttending = computed(() => attendingCount.value > 0);
 
-const courseField = (course: MenuCourse) => COURSE_FIELDS[course.id];
-const mealsFor = (course: MenuCourse, guest: GuestForm) =>
-  optionsFor(course, guest.isChild);
+/** wording and the per-night cap both follow how many of the party are coming */
+const choiceLabel = (choice: RoomChoice) =>
+  roomChoiceLabel(choice, attendingCount.value);
+const roomCap = computed(() => maxRoomsPerNight(attendingCount.value));
+const canAddRoom = (night: RoomNight) =>
+  bookedRooms.value[night].length < roomCap.value;
 
-/** locked-summary line: defined-course choice names, e.g. "Soup · Roast Beef · Eton Mess" */
-const choiceSummary = (guest: GuestForm) =>
-  menu.courses
-    .map((course) => optionName(guest[courseField(course)]))
-    .filter(Boolean)
-    .join(" · ") || "—";
-
-const anyAttending = computed(() =>
-  guests.value.some((guest) => guest.attending === "yes"),
+/**
+ * Flat, priceable view of the form's rooms — submitted in night order.
+ * Nobody is asked how many sleep in each room: the party's attending guests are
+ * spread across that night's rooms in order, a share taking one of them and a
+ * room of their own taking up to two, so the night-before per-person price only
+ * ever counts beds the party actually needs.
+ */
+const chosenRooms = computed(() =>
+  ROOM_NIGHTS.flatMap((night) => {
+    let unplaced = attendingCount.value;
+    return bookedRooms.value[night]
+      .filter((room) => room.choice !== "")
+      .map((room) => {
+        const occupants =
+          room.choice === "our_room" ? Math.min(Math.max(unplaced, 1), 2) : 1;
+        unplaced -= occupants;
+        return {
+          night,
+          choice: room.choice as RoomChoice,
+          shareWith: room.choice === "share_named" ? room.shareWith : null,
+          occupants,
+        };
+      });
+  }),
 );
 
-const deadlineLabel = computed(() => {
-  const deadline = data.value?.deadline;
-  if (!deadline) return "";
-  return new Date(deadline).toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-});
+const total = computed(() => roomTotal(chosenRooms.value));
+
+/** what one row of the form currently costs, using its derived occupancy */
+const priceOf = (night: RoomNight, index: number) => {
+  const room = chosenRooms.value.filter((entry) => entry.night === night)[
+    index
+  ];
+  return room ? roomPrice(night, room.choice, room.occupants) : 0;
+};
+
+const addRoom = (night: RoomNight) =>
+  bookedRooms.value[night].push({ choice: "", shareWith: "" });
+const removeRoom = (night: RoomNight, index: number) =>
+  bookedRooms.value[night].splice(index, 1);
+
+const formatDate = (value: string | null | undefined) =>
+  value
+    ? new Date(value).toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
+    : "";
+
+const deadlineLabel = computed(() => formatDate(data.value?.deadline));
+const paymentDeadlineLabel = computed(() =>
+  formatDate(data.value?.paymentDeadline),
+);
+
+/** locked-summary line for one stored room, e.g. "Sharing with Jo Jones — £80" */
+const roomSummary = (room: {
+  night: RoomNight;
+  choice: RoomChoice;
+  shareWith: string | null;
+  occupants: number;
+}) => {
+  const label =
+    room.choice === "share_named" && room.shareWith
+      ? `Sharing with ${room.shareWith}`
+      : roomChoiceLabel(room.choice, attendingCount.value);
+  return `${label} — £${roomPrice(room.night, room.choice, room.occupants)}`;
+};
 
 async function submit() {
   error.value = "";
@@ -78,48 +129,31 @@ async function submit() {
     return;
   }
   if (
-    guests.value.some(
-      (guest) =>
-        guest.attending === "yes" &&
-        menu.courses.some((course) => !guest[courseField(course)]),
+    ROOM_NIGHTS.some((night) =>
+      bookedRooms.value[night].some(
+        (room) => room.choice === "share_named" && !room.shareWith.trim(),
+      ),
     )
   ) {
-    error.value = "Please choose every course for everyone attending.";
+    error.value = "Please say who you're sharing each shared room with.";
     return;
-  }
-  // phone only required when someone attends; validate whenever one is entered
-  let normalised: string | null = null;
-  if (anyAttending.value || phone.value.trim()) {
-    normalised = normalisePhone(phone.value);
-    if (!normalised) {
-      error.value = "Please enter a valid phone number.";
-      return;
-    }
   }
   pending.value = true;
   try {
     await $fetch("/api/rsvp", {
       method: "POST",
       body: {
-        phone: normalised ?? "",
+        // contact numbers are held by the couple, not re-asked here
+        phone: "",
         songRequest: song.value || undefined,
         noteToCouple: note.value || undefined,
         guests: guests.value.map((guest) => ({
           id: guest.id,
           attending: guest.attending === "yes",
-          ...Object.fromEntries(
-            menu.courses.map((course) => [
-              courseField(course),
-              guest.attending === "yes"
-                ? guest[courseField(course)]
-                : undefined,
-            ]),
-          ),
-          dietaryNotes: guest.dietaryNotes || undefined,
         })),
+        rooms: chosenRooms.value,
       },
     });
-    if (normalised) phone.value = normalised;
     submitted.value = true;
   } catch (err) {
     error.value =
@@ -171,7 +205,7 @@ const fieldClass =
           <p class="mt-1 text-sm text-leaf-deep">
             {{
               guest.attending === "yes"
-                ? `Attending — ${choiceSummary(guest)}`
+                ? "Attending"
                 : guest.attending === "no"
                   ? "Not attending"
                   : "No reply received"
@@ -179,6 +213,27 @@ const fieldClass =
           </p>
         </li>
       </ul>
+      <template v-for="night in ROOM_NIGHTS" :key="night">
+        <div
+          v-if="data.rooms.some((room) => room.night === night)"
+          class="mt-6"
+        >
+          <h3 class="text-left font-display text-lg text-ink">
+            {{ ROOM_NIGHT_LABELS[night] }}
+          </h3>
+          <ul class="mt-2 space-y-2 text-left">
+            <li
+              v-for="(room, index) in data.rooms.filter(
+                (entry) => entry.night === night,
+              )"
+              :key="index"
+              class="rounded-2xl border border-leaf/30 bg-white/60 px-5 py-3 text-sm text-leaf-deep"
+            >
+              {{ roomSummary(room) }}
+            </li>
+          </ul>
+        </div>
+      </template>
       <p class="mt-6 text-leaf-deep">
         Need to change something? Please contact us directly.
       </p>
@@ -278,82 +333,149 @@ const fieldClass =
             {{ option.label }}
           </label>
         </div>
-        <template v-if="guest.attending === 'yes'">
-          <label
-            v-for="course in menu.courses"
-            :key="course.id"
-            class="mt-3 block text-sm text-leaf-deep"
-          >
-            {{ course.name }}
-            <span class="relative mt-1 block">
-              <select
-                v-model="guest[courseField(course)]"
-                :name="`meal-${course.id}-${guest.id}`"
-                required
-                class="w-full appearance-none pr-10"
-                :class="fieldClass"
-              >
-                <option value="" disabled>
-                  Choose a {{ course.name.toLowerCase() }}
-                </option>
-                <option
-                  v-for="option in mealsFor(course, guest)"
-                  :key="option.id"
-                  :value="option.id"
-                >
-                  {{ option.name }}
-                </option>
-              </select>
-              <!-- custom chevron, padded off the edge (appearance-none removes the stock one) -->
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
-                class="pointer-events-none absolute right-4 top-1/2 size-4 -translate-y-1/2 text-leaf-deep"
-              >
-                <path d="m6 9 6 6 6-6" />
-              </svg>
-            </span>
-          </label>
-          <textarea
-            v-model="guest.dietaryNotes"
-            :name="`dietary-${guest.id}`"
-            rows="2"
-            placeholder="Dietary requirements or allergies"
-            class="mt-3 w-full"
-            :class="fieldClass"
-          />
-        </template>
       </fieldset>
 
-      <div class="mt-8 flex flex-col gap-3">
+      <!-- overnight rooms: the two nights are booked and priced separately -->
+      <section v-if="anyAttending" v-reveal class="mt-10">
+        <h2 class="font-display text-2xl text-ink">Staying over?</h2>
+        <p class="mt-2 text-sm text-leaf-deep">
+          Book as many rooms as you need for either night - most are doubles and
+          twins.
+        </p>
+
+        <fieldset
+          v-for="night in ROOM_NIGHTS"
+          :key="night"
+          class="mt-6 rounded-2xl border border-leaf/30 bg-white/60 px-5 py-4"
+        >
+          <legend class="px-2 font-display text-lg text-ink">
+            {{ ROOM_NIGHT_LABELS[night] }}
+          </legend>
+          <p class="text-sm text-leaf-deep">
+            <template v-if="night === 'before'">
+              £{{ roomContent.prices.before.perPerson }} per person, including a
+              hot food buffet dinner and continental breakfast.
+            </template>
+            <template v-else>
+              £{{ roomContent.prices.of.ourRoom }} for a room of your own, or
+              £{{ roomContent.prices.of.perPerson }}
+              per person to share. This includes a full English breakfast the
+              next day.
+            </template>
+          </p>
+
+          <div
+            v-for="(room, index) in bookedRooms[night]"
+            :key="index"
+            class="mt-4 border-t border-leaf/20 pt-4 first:border-t-0 first:pt-0"
+          >
+            <label class="block text-sm text-leaf-deep">
+              Room {{ index + 1 }}
+              <span class="relative mt-1 block">
+                <select
+                  v-model="room.choice"
+                  :name="`room-${night}-${index}-choice`"
+                  required
+                  class="w-full appearance-none pr-10"
+                  :class="fieldClass"
+                >
+                  <option value="" disabled>Choose an arrangement</option>
+                  <option
+                    v-for="choice in ROOM_CHOICES"
+                    :key="choice"
+                    :value="choice"
+                  >
+                    {{ choiceLabel(choice) }}
+                  </option>
+                </select>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                  class="pointer-events-none absolute right-4 top-1/2 size-4 -translate-y-1/2 text-leaf-deep"
+                >
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </span>
+            </label>
+
+            <label
+              v-if="room.choice === 'share_named'"
+              class="mt-3 block text-sm text-leaf-deep"
+            >
+              Who are you sharing with?
+              <input
+                v-model="room.shareWith"
+                type="text"
+                :name="`room-${night}-${index}-share`"
+                required
+                placeholder="Their name"
+                class="mt-1 w-full"
+                :class="fieldClass"
+              />
+            </label>
+
+            <div class="mt-2 flex items-center justify-between text-sm">
+              <span class="text-leaf-deep">
+                <template v-if="room.choice"
+                  >£{{ priceOf(night, index) }}</template
+                >
+              </span>
+              <button
+                type="button"
+                class="text-petal underline transition hover:text-petal-deep"
+                @click="removeRoom(night, index)"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+
+          <button
+            v-if="canAddRoom(night)"
+            :data-add-room="night"
+            type="button"
+            class="mt-4 rounded-full border border-leaf/40 px-4 py-2 font-display text-sm text-leaf-deep transition hover:border-petal hover:text-petal"
+            @click="addRoom(night)"
+          >
+            Add a room
+          </button>
+        </fieldset>
+
+        <div
+          v-if="chosenRooms.length"
+          class="mt-6 rounded-2xl border border-petal/40 bg-white/70 px-5 py-4"
+        >
+          <p data-payment-disclaimer class="text-sm text-leaf-deep">
+            You don't have to pay right now - you can pay any time
+            <template v-if="paymentDeadlineLabel"
+              >before {{ paymentDeadlineLabel }}</template
+            >.
+          </p>
+          <div class="mt-3 flex items-center justify-between gap-4">
+            <p data-room-total class="font-display text-2xl text-ink">
+              £{{ total }}
+            </p>
+            <a
+              data-monzo-link
+              :href="monzoLink(total, data.partyId!)"
+              target="_blank"
+              rel="noopener"
+              class="rounded-full bg-leaf-deep px-5 py-2.5 font-display text-sm text-cream transition hover:bg-leaf"
+            >
+              Pay here
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <div v-reveal class="mt-8 flex flex-col gap-3">
         <label
           class="text-sm uppercase tracking-widest text-petal-deep"
-          for="rsvp-phone"
-        >
-          Best contact number
-          <span
-            v-if="!anyAttending"
-            class="normal-case tracking-normal text-leaf/80"
-            >(optional)</span
-          >
-        </label>
-        <input
-          id="rsvp-phone"
-          v-model="phone"
-          type="tel"
-          name="phone"
-          :required="anyAttending"
-          autocomplete="tel"
-          placeholder="Phone number"
-          :class="fieldClass"
-        />
-        <label
-          class="mt-3 text-sm uppercase tracking-widest text-petal-deep"
           for="rsvp-song"
         >
           Song that gets you dancing
@@ -393,6 +515,7 @@ const fieldClass =
       </p>
 
       <button
+        v-reveal
         type="submit"
         :disabled="pending"
         class="mt-6 w-full rounded-full bg-leaf-deep px-5 py-3 font-display text-cream transition hover:bg-leaf disabled:opacity-60"

@@ -17,10 +17,14 @@ export default defineEventHandler(async (event) => {
   const party = await db.query.parties.findFirst({ where: eq(parties.id, id), with: { guests: true } })
   if (!party) throw createError({ statusCode: 404, message: 'Party not found.' })
 
-  const body = await readBody<{ name?: string, guests?: GuestEdit[] }>(event)
+  const body = await readBody<{ name?: string, guests?: GuestEdit[], amountPaid?: number }>(event)
   const name = typeof body?.name === 'string' ? body.name.trim() : party.name
   if (!name) throw createError({ statusCode: 400, message: 'A party needs a name.' })
   await db.update(parties).set({ name, updatedAt: new Date().toISOString() }).where(eq(parties.id, id))
+
+  if (body?.amountPaid !== undefined) {
+    await setAmountPaid(db, id, Number(body.amountPaid))
+  }
 
   if (Array.isArray(body?.guests)) {
     if (body.guests.length === 0 || body.guests.some(guest => typeof guest.name !== 'string' || !guest.name.trim())) {

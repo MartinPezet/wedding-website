@@ -65,6 +65,29 @@ const seedParty = async (db: Db, name: string, seedGuests: SeedGuest[], responde
   return party
 }
 
+const setSetting = async (db: Db, key: string, value: string) => {
+  const { settings } = await import('../../server/db/schema')
+  await db.insert(settings).values({ key, value })
+    .onConflictDoUpdate({ target: settings.key, set: { value } })
+}
+
+const firstGuestId = async (db: Db, partyId: number) => {
+  const { guests } = await import('../../server/db/schema')
+  const { eq } = await import('drizzle-orm')
+  return (await db.query.guests.findMany({ where: eq(guests.partyId, partyId) }))[0]!.id
+}
+
+const mountSettingsPage = async (onSave: (body: Record<string, unknown>) => void) => {
+  registerEndpoint('/api/admin/settings', {
+    method: 'PUT',
+    handler: async (event) => {
+      onSave(await readBody(event))
+      return { ok: true }
+    },
+  })
+  return mountAdminPage('settings')
+}
+
 const listParties = async (db: Db) => {
   const { getPartyList } = await adminUtil()
   return getPartyList(db)
@@ -216,14 +239,79 @@ describeFeature(feature, (f) => {
   })
 
   f.Rule('Admin can edit RSVP answers', (r) => {
-    r.RuleScenario('Meal correction after deadline', (s) => {
+    r.RuleScenario('Attendance correction after deadline', (s) => {
       let db: Db
       let partyId = 0
       let guestId = 0
-      s.Given('a guest with a submitted course choice and a passed RSVP deadline', async () => {
+      s.Given('a guest with a passed RSVP deadline', async () => {
         db = await freshDb()
-        const { settings } = await import('../../server/db/schema')
-        await db.insert(settings).values({ key: 'rsvp_deadline', value: '2020-01-01T00:00:00Z' })
+        await setSetting(db, 'rsvp_deadline', '2020-01-01T00:00:00Z')
+        const party = await seedParty(db, 'The Changers', [
+          { name: 'Cass Changer', phone: '+447911123456', attending: false },
+        ], true)
+        partyId = party.id
+        guestId = await firstGuestId(db, partyId)
+      })
+      s.When(`the admin changes the guest's attendance`, async () => {
+        const { saveRsvp } = await import('../../server/utils/rsvp')
+        const result = await saveRsvp(db, partyId, {
+          phone: '+447911123456',
+          guests: [{ id: guestId, attending: true }],
+        }, { admin: true })
+        expect(result).toEqual({ ok: true })
+      })
+      s.Then('the change is saved and reflected in dashboard totals and exports', async () => {
+        const { guests } = await import('../../server/db/schema')
+        const { eq } = await import('drizzle-orm')
+        const [stored] = await db.select().from(guests).where(eq(guests.id, guestId))
+        expect(stored!.attending).toBe(true)
+        const { getDashboardStats } = await adminUtil()
+        expect((await getDashboardStats(db)).attending).toBe(1)
+      })
+    })
+
+    r.RuleScenario('Room booking correction after deadline', (s) => {
+      let db: Db
+      let partyId = 0
+      let guestId = 0
+      s.Given('a party with a passed RSVP deadline', async () => {
+        db = await freshDb()
+        await setSetting(db, 'rsvp_deadline', '2020-01-01T00:00:00Z')
+        const party = await seedParty(db, 'The Stayers', [
+          { name: 'Sam Stayer', phone: '+447911123456', attending: true },
+        ], true)
+        partyId = party.id
+        guestId = await firstGuestId(db, partyId)
+      })
+      s.When(`the admin changes the party's room bookings`, async () => {
+        const { saveRsvp } = await import('../../server/utils/rsvp')
+        const result = await saveRsvp(db, partyId, {
+          phone: '+447911123456',
+          guests: [{ id: guestId, attending: true }],
+          rooms: [{ night: 'of', choice: 'our_room', occupants: 2 }],
+        }, { admin: true })
+        expect(result).toEqual({ ok: true })
+      })
+      s.Then('the change is saved and reflected in dashboard totals and exports', async () => {
+        const { getRoomRequests } = await import('../../server/utils/rsvp')
+        const rows = await getRoomRequests(db, partyId)
+        expect(rows).toHaveLength(1)
+        expect(rows[0]).toMatchObject({ night: 'of', choice: 'our_room', occupants: 2 })
+        const { getDashboardStats } = await adminUtil()
+        const stats = await getDashboardStats(db)
+        expect(stats.roomTotals.find((entry: { night: string, choice: string }) =>
+          entry.night === 'of' && entry.choice === 'our_room')!.count).toBe(1)
+      })
+    })
+
+    r.RuleScenario('Meal correction after food deadline', (s) => {
+      let db: Db
+      let partyId = 0
+      let guestId = 0
+      s.Given('a guest with a submitted course choice and a passed food deadline', async () => {
+        db = await freshDb()
+        await setSetting(db, 'food_choice_open', 'true')
+        await setSetting(db, 'food_deadline', '2020-01-01T00:00:00Z')
         const party = await seedParty(db, 'The Fixers', [
           { name: 'Fay Fixer', phone: '+447911123456', attending: true, ...fullChoices() },
         ], true)
@@ -233,10 +321,10 @@ describeFeature(feature, (f) => {
         guestId = (await db.query.guests.findMany({ where: eq(guests.partyId, partyId) }))[0]!.id
       })
       s.When(`the admin changes one of the guest's course choices`, async () => {
-        const { saveRsvp } = await import('../../server/utils/rsvp')
-        const result = await saveRsvp(db, partyId, {
-          phone: '+447911123456',
-          guests: [{ id: guestId, attending: true, ...fullChoices(), mainChoiceId: courseOptions('main')[1]!.id }],
+        // meal answers live behind the food-choice page now, edited on their own
+        const { saveFood } = await import('../../server/utils/food')
+        const result = await saveFood(db, partyId, {
+          guests: [{ id: guestId, ...fullChoices(), mainChoiceId: courseOptions('main')[1]!.id }],
         }, { admin: true })
         expect(result).toEqual({ ok: true })
       })
@@ -361,7 +449,13 @@ describeFeature(feature, (f) => {
         db = await freshDb()
         registerEndpoint('/api/admin/settings', {
           method: 'GET',
-          handler: () => ({ weddingDate: '2027-01-17', rsvpDeadline: '2100-01-01T00:00:00Z' }),
+          handler: () => ({
+            weddingDate: '2027-01-17',
+            rsvpDeadline: '2100-01-01T00:00:00Z',
+            foodDeadline: '2100-02-01T00:00:00Z',
+            paymentDeadline: '2100-03-01T00:00:00Z',
+            foodChoiceOpen: false,
+          }),
         })
         registerEndpoint('/api/admin/settings', {
           method: 'PUT',
@@ -398,7 +492,315 @@ describeFeature(feature, (f) => {
         expect(retry.ok).toBe(true)
       })
     })
+
+    r.RuleScenario('Food deadline moved', (s) => {
+      let db: Db
+      let saved: Record<string, unknown> | null = null
+      let wrapper: Wrapper
+      s.Given('the admin settings page', async () => {
+        db = await freshDb()
+        wrapper = await mountSettingsPage((body) => {
+          saved = body
+        })
+      })
+      s.When('the admin changes the food-choice deadline', async () => {
+        await wrapper.find('input[name="foodDeadline"]').setValue('2020-01-01')
+        await wrapper.find('form').trigger('submit')
+        await flush()
+        expect(saved).toMatchObject({ foodDeadline: expect.stringContaining('2020-01-01') })
+        const { saveSettings } = await adminUtil()
+        // the RSVP deadline stays wide open — the two move independently
+        await saveSettings(db, { rsvpDeadline: '2100-01-01T00:00:00Z', foodChoiceOpen: true, foodDeadline: '2020-01-01T00:00:00Z' })
+      })
+      s.Then(`the food-choice page's lock behaviour follows the new deadline immediately, independent of the RSVP deadline`, async () => {
+        const party = await seedParty(db, 'The Eaters', [{ name: 'Ed Eater', phone: '+447911123456', attending: true }], true)
+        const guestId = await firstGuestId(db, party.id)
+        const { saveFood } = await import('../../server/utils/food')
+        expect((await saveFood(db, party.id, { guests: [{ id: guestId, ...fullChoices() }] })).ok).toBe(false)
+        // the RSVP page is untouched by the food deadline
+        const { saveRsvp } = await import('../../server/utils/rsvp')
+        expect((await saveRsvp(db, party.id, { phone: '+447911123456', guests: [{ id: guestId, attending: true }] })).ok).toBe(true)
+        const { saveSettings } = await adminUtil()
+        await saveSettings(db, { foodDeadline: '2100-01-01T00:00:00Z' })
+        expect((await saveFood(db, party.id, { guests: [{ id: guestId, ...fullChoices() }] })).ok).toBe(true)
+      })
+    })
+
+    r.RuleScenario('Food-choice toggled on', (s) => {
+      let db: Db
+      let saved: Record<string, unknown> | null = null
+      let wrapper: Wrapper
+      let partyId = 0
+      let guestId = 0
+      s.Given('the food-choice toggle is off', async () => {
+        db = await freshDb()
+        const { getFoodSettings } = await import('../../server/utils/food')
+        expect((await getFoodSettings(db)).open).toBe(false)
+        const party = await seedParty(db, 'The Eaters', [{ name: 'Ed Eater', phone: '+447911123456', attending: true }], true)
+        partyId = party.id
+        guestId = await firstGuestId(db, partyId)
+        wrapper = await mountSettingsPage((body) => {
+          saved = body
+        })
+      })
+      s.When('the admin switches it on', async () => {
+        await wrapper.find('input[name="foodChoiceOpen"]').setValue(true)
+        await wrapper.find('form').trigger('submit')
+        await flush()
+        expect(saved).toMatchObject({ foodChoiceOpen: true })
+        const { saveSettings } = await adminUtil()
+        await saveSettings(db, { foodChoiceOpen: true })
+      })
+      s.Then('the food-choice page immediately shows the meal form to parties instead of closed-state copy', async () => {
+        const { getFoodSettings, saveFood } = await import('../../server/utils/food')
+        expect((await getFoodSettings(db)).open).toBe(true)
+        expect((await saveFood(db, partyId, { guests: [{ id: guestId, ...fullChoices() }] })).ok).toBe(true)
+      })
+    })
   })
+
+  f.Rule('Room request visibility on the dashboard', (r) => {
+    r.RuleScenario('Room totals reflect data', (s) => {
+      let db: Db
+      let stats: Awaited<ReturnType<Awaited<ReturnType<typeof adminUtil>>['getDashboardStats']>>
+      s.Given('room requests across multiple parties and nights', async () => {
+        db = await freshDb()
+        await setSetting(db, 'rsvp_deadline', '2100-01-01T00:00:00Z')
+        const { saveRsvp } = await import('../../server/utils/rsvp')
+        const seeds = [
+          {
+            name: 'The Firsts',
+            rooms: [
+              { night: 'of' as const, choice: 'our_room' as const, occupants: 2 },
+              { night: 'before' as const, choice: 'share_match' as const },
+            ],
+          },
+          {
+            name: 'The Seconds',
+            rooms: [
+              { night: 'of' as const, choice: 'our_room' as const, occupants: 1 },
+              { night: 'of' as const, choice: 'share_named' as const, shareWith: 'Jo Jones' },
+            ],
+          },
+        ]
+        for (const seed of seeds) {
+          const party = await seedParty(db, seed.name, [{ name: `${seed.name} lead`, phone: '+447911123456', attending: true }], true)
+          const guestId = await firstGuestId(db, party.id)
+          const result = await saveRsvp(db, party.id, {
+            phone: '+447911123456',
+            guests: [{ id: guestId, attending: true }],
+            rooms: seed.rooms,
+          })
+          expect(result).toEqual({ ok: true })
+        }
+      })
+      s.When('the admin opens the dashboard', async () => {
+        const { getDashboardStats } = await adminUtil()
+        stats = await getDashboardStats(db)
+      })
+      s.Then('room-request counts per night and per choice match the current database state', () => {
+        const count = (night: string, choice: string) =>
+          stats.roomTotals.find(entry => entry.night === night && entry.choice === choice)?.count ?? 0
+        expect(count('of', 'our_room')).toBe(2)
+        expect(count('of', 'share_named')).toBe(1)
+        expect(count('of', 'share_match')).toBe(0)
+        expect(count('before', 'share_match')).toBe(1)
+        expect(count('before', 'our_room')).toBe(0)
+      })
+    })
+  })
+
+  f.Rule('Payment amount tracked per party', (r) => {
+    r.RuleScenario('Amount recorded', (s) => {
+      let db: Db
+      let partyId = 0
+      s.Given('a party with a computed room total', async () => {
+        db = await freshDb()
+        await setSetting(db, 'rsvp_deadline', '2100-01-01T00:00:00Z')
+        const party = await seedParty(db, 'The Payers', [{ name: 'Pat Payer', phone: '+447911123456', attending: true }], true)
+        partyId = party.id
+        const { saveRsvp } = await import('../../server/utils/rsvp')
+        await saveRsvp(db, partyId, {
+          phone: '+447911123456',
+          guests: [{ id: await firstGuestId(db, partyId), attending: true }],
+          rooms: [{ night: 'of', choice: 'our_room', occupants: 2 }],
+        })
+      })
+      s.When('the admin enters an amount paid for that party', async () => {
+        const { setAmountPaid } = await adminUtil()
+        await setAmountPaid(db, partyId, 100)
+      })
+      s.Then(`the value is saved and shown next to that party's computed room total`, async () => {
+        const list = await listParties(db)
+        const party = list.find((entry: { id: number }) => entry.id === partyId)!
+        expect(party.amountPaid).toBe(100)
+        expect(party.roomTotal).toBe(160)
+      })
+    })
+
+    r.RuleScenario('No amount recorded yet', (s) => {
+      let db: Db
+      let partyId = 0
+      s.Given('a party that has booked rooms but has no amount recorded', async () => {
+        db = await freshDb()
+        await setSetting(db, 'rsvp_deadline', '2100-01-01T00:00:00Z')
+        const party = await seedParty(db, 'The Owers', [{ name: 'Ozzy Ower', phone: '+447911123456', attending: true }], true)
+        partyId = party.id
+        const { saveRsvp } = await import('../../server/utils/rsvp')
+        await saveRsvp(db, partyId, {
+          phone: '+447911123456',
+          guests: [{ id: await firstGuestId(db, partyId), attending: true }],
+          rooms: [{ night: 'before', choice: 'share_match' }],
+        })
+      })
+      s.When('the admin views that party', () => {})
+      s.Then('the amount paid shows as zero against their computed total', async () => {
+        const list = await listParties(db)
+        const party = list.find((entry: { id: number }) => entry.id === partyId)!
+        expect(party.amountPaid).toBe(0)
+        expect(party.roomTotal).toBe(95)
+      })
+    })
+  })
+
+  f.Rule('Payment status per party on the dashboard', (r) => {
+    interface Outstanding { partyId: number, name: string, owed: number, paid: number, shortfall: number }
+
+    /** a party with an own room on the night of the wedding (£160) and a hand-entered amount paid */
+    const seedPayer = async (db: Db, name: string, paid: number, rooms = true) => {
+      await setSetting(db, 'rsvp_deadline', '2100-01-01T00:00:00Z')
+      const party = await seedParty(db, name, [{ name: `${name} lead`, phone: '+447911123456', attending: true }], true)
+      const { saveRsvp } = await import('../../server/utils/rsvp')
+      await saveRsvp(db, party.id, {
+        phone: '+447911123456',
+        guests: [{ id: await firstGuestId(db, party.id), attending: true }],
+        rooms: rooms ? [{ night: 'of', choice: 'our_room', occupants: 2 }] : [],
+      })
+      if (paid) {
+        const { setAmountPaid } = await adminUtil()
+        await setAmountPaid(db, party.id, paid)
+      }
+      return party.id
+    }
+
+    const openDashboard = async (db: Db) => {
+      const { getDashboardStats } = await adminUtil()
+      const stats = await getDashboardStats(db)
+      registerEndpoint('/api/admin/stats', { method: 'GET', handler: () => stats })
+      registerEndpoint('/api/admin/parties', { method: 'GET', handler: async () => ({ parties: await listParties(db) }) })
+      const wrapper = await mountAdminPage('index')
+      return { outstanding: stats.outstandingPayments as Outstanding[], wrapper }
+    }
+
+    r.RuleScenario('Outstanding balance shown', (s) => {
+      let db: Db
+      let partyId = 0
+      let seen: Awaited<ReturnType<typeof openDashboard>>
+      s.Given('a party that owes more than it has paid', async () => {
+        db = await freshDb()
+        partyId = await seedPayer(db, 'The Owers', 100)
+      })
+      s.When('the admin opens the dashboard', async () => {
+        seen = await openDashboard(db)
+      })
+      s.Then('the dashboard shows its owed amount, its paid amount, and the shortfall', () => {
+        expect(seen.outstanding).toEqual([{ partyId, name: 'The Owers', owed: 160, paid: 100, shortfall: 60 }])
+        const list = seen.wrapper.find('[data-testid="outstanding-payments"]')
+        expect(list.exists()).toBe(true)
+        for (const value of ['The Owers', '£160', '£100', '£60']) {
+          expect(list.text()).toContain(value)
+        }
+      })
+    })
+
+    r.RuleScenario('Settled party not chased', (s) => {
+      let db: Db
+      let seen: Awaited<ReturnType<typeof openDashboard>>
+      s.Given('a party that has paid its full room total', async () => {
+        db = await freshDb()
+        await seedPayer(db, 'The Settled', 160)
+        await seedPayer(db, 'The Owers', 0)
+      })
+      s.When('the admin opens the dashboard', async () => {
+        seen = await openDashboard(db)
+      })
+      s.Then('it is not listed among the parties with an outstanding balance', () => {
+        expect(seen.outstanding.map(entry => entry.name)).toEqual(['The Owers'])
+        expect(seen.wrapper.find('[data-testid="outstanding-payments"]').text()).not.toContain('The Settled')
+      })
+    })
+
+    r.RuleScenario('Party with no rooms omitted', (s) => {
+      let db: Db
+      let seen: Awaited<ReturnType<typeof openDashboard>>
+      s.Given('a party that booked no rooms', async () => {
+        db = await freshDb()
+        await seedPayer(db, 'The Day Guests', 0, false)
+      })
+      s.When('the admin opens the dashboard', async () => {
+        seen = await openDashboard(db)
+      })
+      s.Then('it carries no payment status', () => {
+        expect(seen.outstanding).toEqual([])
+        expect(seen.wrapper.find('[data-testid="party-payment"]').exists()).toBe(false)
+      })
+    })
+  })
+
+  f.Rule('Reconciliation reachable from the admin', (r) => {
+    r.RuleScenario('Reconciliation started from the dashboard', (s) => {
+      let wrapper: Wrapper
+      let redirect = ''
+      let stored: { secure?: { monzoState?: string } } = {}
+      s.Given('an admin on the dashboard', async () => {
+        const db = await freshDb()
+        const { getDashboardStats } = await adminUtil()
+        const stats = await getDashboardStats(db)
+        registerEndpoint('/api/admin/stats', { method: 'GET', handler: () => stats })
+        registerEndpoint('/api/admin/parties', { method: 'GET', handler: () => ({ parties: [] }) })
+        wrapper = await mountAdminPage('index')
+      })
+      s.When('the admin chooses to check payments', async () => {
+        expect(wrapper.find('a[href="/api/admin/monzo/authorise"]').exists()).toBe(true)
+        // what the link's route does: remember a one-off state, send the admin to Monzo
+        vi.stubGlobal('setUserSession', async (_event: unknown, data: typeof stored) => {
+          stored = data
+        })
+        vi.stubGlobal('getRequestURL', () => new URL('https://wedding.test/api/admin/monzo/authorise'))
+        try {
+          const { beginAuthorisation } = await import(`../../server/utils/${'monzo'}.ts`)
+          redirect = await beginAuthorisation({}, { monzoClientId: 'oauth2client_test', monzoClientSecret: 'mnzconf.secret' })
+        }
+        finally {
+          vi.unstubAllGlobals()
+        }
+      })
+      s.Then('the Monzo authorisation flow begins', () => {
+        const url = new URL(redirect)
+        expect(url.host).toBe('auth.monzo.com')
+        expect(url.searchParams.get('client_id')).toBe('oauth2client_test')
+        expect(url.searchParams.get('redirect_uri')).toBe('https://wedding.test/api/admin/monzo/callback')
+        expect(url.searchParams.get('state')).toBeTruthy()
+        expect(stored.secure?.monzoState).toBe(url.searchParams.get('state'))
+      })
+    })
+
+    r.RuleScenario('Allocation portal reachable', (s) => {
+      let hrefs: (string | undefined)[] = []
+      s.Given('an admin in the admin area', () => {})
+      s.When('the admin opens the admin navigation', async () => {
+        const layout = (await import('../../app/layouts/admin.vue')).default
+        const wrapper = await mountSuspended(layout)
+        hrefs = wrapper.findAll('nav a').map(link => link.attributes('href'))
+      })
+      s.Then('the room allocation portal is listed alongside the existing admin pages', () => {
+        expect(hrefs).toContain('/admin/seating')
+        expect(hrefs).toContain('/admin/rooms')
+        expect(hrefs).toContain('/admin/payments')
+      })
+    })
+  })
+
   f.Rule('Save-the-date responses in admin', (r) => {
     const seedResponse = async (db: Db, over: Record<string, unknown>) => {
       const { saveResponse } = await import('../../server/utils/save-the-date')
