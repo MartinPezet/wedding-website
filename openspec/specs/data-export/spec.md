@@ -15,11 +15,11 @@ The system SHALL export a venue workbook (.xlsx) containing: an attendee sheet (
 - **THEN** no sheet in it contains any phone number column or value
 
 ### Requirement: Full guest list export
-The system SHALL export a separate full workbook including all parties and guests with phones, response status, attendance, one column per course defined in menu.json, dietary notes, song requests, and notes.
+The system SHALL export a separate full workbook including all parties and guests with phones, response status, attendance, one column per course defined in menu.json (populated once the food-choice page has been used), dietary notes, song requests, notes, room bookings for both nights (choice and shared-with name per room), and the party's amount paid against its computed room total.
 
 #### Scenario: Full export
 - **WHEN** the admin clicks the full export
-- **THEN** an .xlsx downloads containing every guest with contact details and per-course choices
+- **THEN** an .xlsx downloads containing every guest with contact details, per-course choices, room bookings, and amount paid
 
 ### Requirement: Save-the-date responses in the full export
 The full workbook SHALL include a save-the-date responses sheet with one row per response, carrying household name, phone, address line 1, address line 2, town/city, postcode, country, night-before interest, night-of interest, and submission time. The venue workbook SHALL NOT include this sheet.
