@@ -1,15 +1,23 @@
 [
   {
     "question": "What should I wear?",
-    "answer": "Formal — suits, jackets, dresses, jumpsuits. The wedding colours are navy, pastalle blue, green and gold (obviously don't wear white). The weather will be cold but the ceremony and reception are indoors and heated. The gardens are gravelled, so consider your heels."
+    "answer": "Formal — suits, jackets, dresses, jumpsuits. The wedding colours are navy, baby blue, sage green and gold (obviously don't wear white). The weather will be cold but the ceremony and reception are indoors and heated. The gardens are gravelled, so consider your heels."
   },
   {
-    "question": "Is the venue accessible?",
-    "answer": "Yes — step-free access throughout, an accessible bathroom, and reserved parking near the entrance. Tell us in your RSVP if you have any needs we can plan for."
+    "question": "Do I have to stay at the venue?",
+    "answer": "We have tried our hardest to make it as affordable as possible and would love you all to stay. If you want to share a room and don't know who to share with, there is an option on the form and we will pair you up with someone else who is wanting to share."
+  },
+  {
+    "question": "What's happening the night before?",
+    "answer": "We're having a smart-casual, hot food buffet, relaxed party to get to know everyone. Anyone who wants to stay is invited and there will be a bottle bar to purchase drinks."
   },
   {
     "question": "Can I take photos during the ceremony?",
-    "answer": "We're having an unplugged ceremony — please keep phones away until after the confetti. Our photographer will share everything afterwards."
+    "answer": "We're happy for you to take photos and share them with us, but we have 2 amazing photographers there to document the day so please make use of them as well and enjoy yourself."
+  },
+  {
+    "question": "How do I choose from the menu?",
+    "answer": "We will be sending out a separate form for menu options when they are confirmed. There will be a vegan option for every course."
   },
   {
     "question": "What time should I arrive?",
@@ -24,8 +32,8 @@
     "answer": "We will assume that you do not like us and that you won't be attending."
   },
   {
-    "question": "How do I choose from the menu?",
-    "answer": "We will be sending out a separate form for menu options when they are confirmed."
+    "question": "Is the venue accessible?",
+    "answer": "Yes — step-free access throughout, an accessible bathroom, and reserved parking near the entrance. Tell us in your RSVP if you have any needs we can plan for."
   },
   {
     "question": "Can I bring a plus one?",

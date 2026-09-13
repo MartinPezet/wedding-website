@@ -354,7 +354,7 @@ const fieldClass =
           <p class="text-sm text-leaf-deep">
             <template v-if="night === 'before'">
               £{{ roomContent.prices.before.perPerson }} per person, including a
-              hot food buffet and continental breakfast.
+              hot food buffet dinner and continental breakfast.
             </template>
             <template v-else>
               £{{ roomContent.prices.of.ourRoom }} for a room of your own, or
