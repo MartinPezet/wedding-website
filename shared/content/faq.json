@@ -1,15 +1,7 @@
 [
   {
     "question": "What should I wear?",
-    "answer": "Semi-formal — suits, jackets, dresses, jumpsuits. The ceremony and reception are indoors, but the gardens are grass, so consider your heels."
-  },
-  {
-    "question": "Can I bring a plus one?",
-    "answer": "Invitations are addressed to everyone invited. If your invitation says \"and guest\", yes! Otherwise please check with us first."
-  },
-  {
-    "question": "Are children welcome?",
-    "answer": "We love your little ones, but this is an adults-only celebration — with the exception of children named on the invitation."
+    "answer": "Formal — suits, jackets, dresses, jumpsuits. The wedding colours are navy, pastalle blue, green and gold (obviously don't wear white). The weather will be cold but the ceremony and reception are indoors and heated. The gardens are gravelled, so consider your heels."
   },
   {
     "question": "Is the venue accessible?",
@@ -21,6 +13,22 @@
   },
   {
     "question": "What time should I arrive?",
-    "answer": "Doors open at 12:30pm and the ceremony starts at 1pm sharp. Please arrive with time to find your seat."
+    "answer": "Arrive at the venue from 11:00. See the full updated itenary on the schedule page. Please arrive with time to find your seat."
+  },
+  {
+    "question": "How can I pay for drinks?",
+    "answer": "You will require a card to make payments at the bar and the venue accept most credit & debit cards except American Express."
+  },
+  {
+    "question": "What happens if I don't RSVP?",
+    "answer": "We will assume that you do not like us and that you won't be attending."
+  },
+  {
+    "question": "How do I choose from the menu?",
+    "answer": "We will be sending out a separate form for menu options when they are confirmed."
+  },
+  {
+    "question": "Can I bring a plus one?",
+    "answer": "Invitations are addressed to everyone invited."
   }
 ]

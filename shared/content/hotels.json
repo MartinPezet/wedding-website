@@ -2,33 +2,15 @@
   "hotels": [
     {
       "name": "St Audries Park — stay with us",
-      "description": "We would love you to stay at the venue itself. We are block-booking rooms for the night before and the night of the wedding at around £200 per room per night, with dinner and breakfast included. Tell us on the save-the-date form if you are interested and we will make sure we reserve enough.",
+      "description": "We would love you to stay at the venue itself. We are block-booking rooms for the night before and the night of the wedding, with dinner and breakfast included.",
       "distance": "At the venue",
       "url": "https://www.audries-park.co.uk/"
-    },
-    {
-      "name": "The Windmill Inn",
-      "description": "Our first choice if you would rather not stay at the venue. Mention the wedding when you book.",
-      "url": "https://www.the-windmill.co.uk/"
-    },
-    {
-      "name": "Placeholder Manor Hotel",
-      "description": "Larger country hotel with a spa, ideal if you're making a weekend of it.",
-      "distance": "10 min drive from the venue",
-      "url": "https://example.com/placeholder-manor"
-    },
-    {
-      "name": "Budget Stays Placeholder",
-      "description": "Reliable budget option near the motorway junction.",
-      "distance": "15 min drive from the venue",
-      "url": "https://example.com/budget-stays"
     }
   ],
   "transport": [
     {
       "name": "By train",
-      "description": "Taunton is the nearest mainline station, about half an hour from the venue by taxi (placeholder — exact times to confirm).",
-      "url": "https://www.nationalrail.co.uk"
+      "description": "Taunton is the nearest mainline station, about half an hour from the venue by taxi."
     },
     {
       "name": "By taxi",
@@ -36,7 +18,7 @@
     },
     {
       "name": "By car",
-      "description": "St Audries Park is on the A39 at West Quantoxhead, signposted from the main road. Postcode TA4 4DS for sat-nav."
+      "description": "St Audries Park is on the A39 at West Quantoxhead, signposted from the main road. Postcode TA4 4DS for sat-nav. There are 4 slow electric charger points at the venue if needed."
     }
   ],
   "parking": "Free parking is available at the venue. Cars may be left overnight but must be collected by 10am the next morning."

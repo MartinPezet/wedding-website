@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { schedule } from "#shared/content";
+import { schedule, venue } from "#shared/content";
 
 // mockup 1a shows "1:30pm"-style times
 const time = (iso: string) =>
@@ -7,7 +7,6 @@ const time = (iso: string) =>
     .toLocaleTimeString("en-GB", {
       hour: "numeric",
       minute: "2-digit",
-      hour12: true,
     })
     .replace(" ", "");
 
@@ -30,6 +29,11 @@ useSeoMeta({
     <div v-reveal.focal class="text-center">
       <FloralHeading eyebrow="Order of celebration">The Day</FloralHeading>
       <p class="mt-2 text-leaf-deep">{{ day }}</p>
+      <p class="mt-2 text-ink">
+        {{ venue.name }}, {{ venue.addressLines.join(", ") }},
+        {{ venue.county }},
+        {{ venue.postcode }}
+      </p>
       <a
         href="/api/calendar.ics"
         class="mt-6 inline-block rounded-full bg-leaf-deep px-5 py-2.5 font-display text-sm text-cream transition hover:bg-leaf"
@@ -56,7 +60,7 @@ useSeoMeta({
             class="order-1 text-left font-display text-xl text-petal-deep sm:text-3xl"
             :class="i % 2 === 0 ? 'sm:text-right' : 'sm:order-3'"
           >
-            {{ time(event.start) }}
+            {{ time(event.start) + (event.end ? " - " + time(event.end) : "") }}
           </p>
           <FloralBloom class="order-2 mx-auto w-8 sm:w-9" />
           <div
@@ -73,7 +77,7 @@ useSeoMeta({
               {{ event.description }}
             </p>
             <p class="mt-2 text-xs text-leaf-deep">{{ event.location }}</p>
-            <p class="mt-1.5 text-xs">
+            <p v-if="event.mapsUrl" class="mt-1.5 text-xs">
               <a
                 :href="event.mapsUrl"
                 target="_blank"
@@ -81,12 +85,12 @@ useSeoMeta({
                 class="text-petal underline hover:text-petal-deep"
                 >Google Maps</a
               >
-              <span class="text-leaf-deep/50"> · </span>
+              <!-- <span class="text-leaf-deep/50"> · </span>
               <a
                 :href="`/api/calendar.ics?event=${i}`"
                 class="text-leaf-deep underline hover:text-leaf"
                 >Add to calendar</a
-              >
+              > -->
             </p>
           </div>
         </li>
