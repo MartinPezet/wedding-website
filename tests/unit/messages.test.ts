@@ -3,13 +3,19 @@ import { describe, expect, it } from 'vitest'
 import { DEFAULT_MESSAGE, fillMessage, smsHref, whatsappHref } from '../../shared/utils/messages'
 
 describe('fillMessage', () => {
-  it('fills every {name} and {link}', () => {
-    expect(fillMessage('{name}! {link} — see you, {name}', { name: 'The Smiths', link: 'https://x.test/?t=abc' }))
-      .toBe('The Smiths! https://x.test/?t=abc — see you, The Smiths')
+  const values = { name: 'The Smiths', link: 'https://x.test/?t=abc', food_link: 'https://x.test/menu?t=abc' }
+
+  it('fills every {name}, {link} and {food_link}', () => {
+    expect(fillMessage('{name}! {link} {food_link} — see you, {name}', values))
+      .toBe('The Smiths! https://x.test/?t=abc https://x.test/menu?t=abc — see you, The Smiths')
+  })
+
+  it('leaves unknown placeholders as typed', () => {
+    expect(fillMessage('Hi {name}, {nope}', values)).toBe('Hi The Smiths, {nope}')
   })
 
   it('inserts $ sequences in values literally', () => {
-    expect(fillMessage('Hi {name}', { name: 'Jo $& Sam', link: '' })).toBe('Hi Jo $& Sam')
+    expect(fillMessage('Hi {name}', { name: 'Jo $& Sam' })).toBe('Hi Jo $& Sam')
   })
 
   it('default reminder mentions both placeholders', () => {

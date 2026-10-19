@@ -4,7 +4,7 @@ The couple need to chase guests who haven't RSVP'd and, closer to the day, send 
 
 ## What Changes
 
-- Dashboard gains an editable message box, pre-filled with an RSVP reminder. `{name}` and `{link}` placeholders are filled per party with the party name and its personal RSVP link.
+- Dashboard gains an editable message box, pre-filled with an RSVP reminder. `{name}`, `{link}` and `{food_link}` placeholders are filled per party with the party name, its personal RSVP link, and its personal food-choice (menu) link.
 - Each party row with a contact phone gains "Text" (`sms:`) and "WhatsApp" (`https://wa.me/`) links that open the admin's own messaging app pre-filled with that party's message.
 - Works with the existing response filter: "Not yet responded" for chasing, "All" for general info.
 - No server changes, no persistence, nothing is sent by the site.

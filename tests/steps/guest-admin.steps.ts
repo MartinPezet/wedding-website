@@ -1099,6 +1099,27 @@ describeFeature(feature, (f) => {
       })
     })
 
+    r.RuleScenario('Food link placeholder', (s) => {
+      let db: Db
+      let wrapper: Wrapper
+      let token = ''
+      s.Given('an outstanding party with a contact phone', async () => {
+        db = await freshDb()
+        token = (await seedParty(db, 'The Ghosts', [{ name: 'Gil Ghost', phone: '+447911123456' }], false)).token
+      })
+      s.When('the admin replaces the message box text with {string}', async (_ctx, text: string) => {
+        wrapper = await mountDashboard(db)
+        await wrapper.find('textarea[name="message"]').setValue(text)
+        await flush()
+      })
+      s.Then('the party\'s Text and WhatsApp links carry that message with its name and its food-choice link filled in', () => {
+        const expected = `Hi The Ghosts, pick your meals: ${window.location.origin}/menu?t=${token}`
+        const links = messageLinks(wrapper, 'The Ghosts')
+        expect(links.smsBody).toBe(expected)
+        expect(links.whatsappBody).toBe(expected)
+      })
+    })
+
     r.RuleScenario('Party without a phone', (s) => {
       let db: Db
       let wrapper: Wrapper

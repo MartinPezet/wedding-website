@@ -190,7 +190,7 @@ Feature: Guest admin
 
   @req:text-messages-to-parties-from-the-dashboard
   Rule: Text messages to parties from the dashboard
-    Editable message box with {name} and {link} placeholders; per-party Text (sms:) and WhatsApp (wa.me) links
+    Editable message box with {name}, {link} and {food_link} placeholders; per-party Text (sms:) and WhatsApp (wa.me) links
     pre-filled with that party's message, sent from the admin's own phone. Nothing is sent by the site.
 
     Scenario: Reminder pre-filled for an outstanding party
@@ -202,6 +202,11 @@ Feature: Guest admin
       Given two parties with contact phones
       When the admin replaces the message box text with "Hi {name}, coaches leave at 4pm. Details: {link}"
       Then each party's Text and WhatsApp links carry that message with its own name and RSVP link filled in
+
+    Scenario: Food link placeholder
+      Given an outstanding party with a contact phone
+      When the admin replaces the message box text with "Hi {name}, pick your meals: {food_link}"
+      Then the party's Text and WhatsApp links carry that message with its name and its food-choice link filled in
 
     Scenario: Party without a phone
       Given a party with no contact phone

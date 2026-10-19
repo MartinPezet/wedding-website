@@ -41,13 +41,18 @@ const filtered = computed(() => {
   }
 })
 
-const rsvpLink = (party: AdminParty) => {
+// the token gate accepts ?t= on any page, so a link to any path lands the party signed in
+const rsvpLink = (party: AdminParty, path = '/') => {
   const origin = import.meta.client ? window.location.origin : ''
-  return `${origin}/?t=${party.token}`
+  return `${origin}${path}?t=${party.token}`
 }
 
 const message = ref(DEFAULT_MESSAGE)
-const messageFor = (party: AdminParty) => fillMessage(message.value, { name: party.name, link: rsvpLink(party) })
+const messageFor = (party: AdminParty) => fillMessage(message.value, {
+  name: party.name,
+  link: rsvpLink(party),
+  food_link: rsvpLink(party, '/menu'),
+})
 
 const copied = ref(0)
 async function copyLink(party: AdminParty) {
@@ -164,7 +169,8 @@ const statCards = computed(() => [
     <details class="mt-3 rounded-xl border border-ink/10 bg-white/70 p-4">
       <summary class="cursor-pointer text-sm font-semibold text-leaf-deep">Text guests</summary>
       <label for="message" class="mt-3 block text-sm text-ink/70">
-        Message — <code>{name}</code> and <code>{link}</code> are filled in per party. Filter to “Not yet responded” to chase RSVPs.
+        Message — <code>{name}</code>, <code>{link}</code> (RSVP) and <code>{food_link}</code> (menu choices) are filled in per party.
+        Filter to “Not yet responded” to chase RSVPs.
       </label>
       <textarea
         id="message"
