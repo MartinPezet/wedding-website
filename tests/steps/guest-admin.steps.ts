@@ -5,6 +5,7 @@ import { expect, vi } from 'vitest'
 import { readBody } from 'h3'
 import { clearNuxtData } from '#imports'
 import { menu } from '#shared/content'
+import { DEFAULT_MESSAGE } from '../../shared/utils/messages'
 
 setVitestCucumberConfiguration({ excludeTags: ['manual'] })
 
@@ -1022,6 +1023,97 @@ describeFeature(feature, (f) => {
       s.Then('access is refused and no data is changed', () => {
         expect(outcome?.statusCode).toBe(401)
         vi.unstubAllGlobals()
+      })
+    })
+  })
+  f.Rule('Text messages to parties from the dashboard', (r) => {
+    const mountDashboard = async (db: Db) => {
+      registerEndpoint('/api/admin/stats', { method: 'GET', handler: async () => (await adminUtil()).getDashboardStats(db) })
+      registerEndpoint('/api/admin/parties', { method: 'GET', handler: async () => ({ parties: await listParties(db) }) })
+      return mountAdminPage('index')
+    }
+
+    /** the party's Text and WhatsApp hrefs, message bodies decoded */
+    const messageLinks = (wrapper: Wrapper, partyName: string) => {
+      const row = wrapper.findAll('[data-testid="party-list"] > li').find(li => li.text().includes(partyName))!
+      const href = (testid: string) => {
+        const link = row.find(`a[data-testid="${testid}"]`)
+        return link.exists() ? link.attributes('href') ?? '' : ''
+      }
+      const sms = href('text-link')
+      const whatsapp = href('whatsapp-link')
+      return {
+        sms,
+        whatsapp,
+        smsBody: decodeURIComponent(sms.split('body=')[1] ?? ''),
+        whatsappBody: decodeURIComponent(whatsapp.split('text=')[1] ?? ''),
+      }
+    }
+
+    const rsvpLinkFor = (token: string) => `${window.location.origin}/?t=${token}`
+
+    r.RuleScenario('Reminder pre-filled for an outstanding party', (s) => {
+      let db: Db
+      let wrapper: Wrapper
+      let token = ''
+      s.Given('an outstanding party with a contact phone', async () => {
+        db = await freshDb()
+        token = (await seedParty(db, 'The Ghosts', [{ name: 'Gil Ghost', phone: '+447911123456' }], false)).token
+      })
+      s.When('the admin opens the dashboard and selects the not-yet-responded filter', async () => {
+        wrapper = await mountDashboard(db)
+        await wrapper.find('select[name="filter"]').setValue('outstanding')
+        await flush()
+      })
+      s.Then('the party has a Text link and a WhatsApp link to its number whose message is the default reminder containing the party name and RSVP link', () => {
+        const links = messageLinks(wrapper, 'The Ghosts')
+        expect(links.sms).toMatch(/^sms:\+447911123456\?/)
+        expect(links.whatsapp).toMatch(/^https:\/\/wa\.me\/447911123456\?/)
+        const expected = DEFAULT_MESSAGE.replace('{name}', 'The Ghosts').replace('{link}', rsvpLinkFor(token))
+        expect(links.smsBody).toBe(expected)
+        expect(links.whatsappBody).toBe(expected)
+      })
+    })
+
+    r.RuleScenario('Edited message used for every party', (s) => {
+      let db: Db
+      let wrapper: Wrapper
+      const tokens: Record<string, string> = {}
+      s.Given('two parties with contact phones', async () => {
+        db = await freshDb()
+        tokens['The Ghosts'] = (await seedParty(db, 'The Ghosts', [{ name: 'Gil Ghost', phone: '+447911123456' }], false)).token
+        tokens['The Fulls'] = (await seedParty(db, 'The Fulls', [{ name: 'Amy Full', phone: '+447911123457' }], true)).token
+      })
+      s.When('the admin replaces the message box text with {string}', async (_ctx, text: string) => {
+        wrapper = await mountDashboard(db)
+        await wrapper.find('textarea[name="message"]').setValue(text)
+        await flush()
+      })
+      s.Then('each party\'s Text and WhatsApp links carry that message with its own name and RSVP link filled in', () => {
+        for (const [name, token] of Object.entries(tokens)) {
+          const expected = `Hi ${name}, coaches leave at 4pm. Details: ${rsvpLinkFor(token)}`
+          const links = messageLinks(wrapper, name)
+          expect(links.smsBody).toBe(expected)
+          expect(links.whatsappBody).toBe(expected)
+        }
+      })
+    })
+
+    r.RuleScenario('Party without a phone', (s) => {
+      let db: Db
+      let wrapper: Wrapper
+      s.Given('a party with no contact phone', async () => {
+        db = await freshDb()
+        await seedParty(db, 'The Quiets', [{ name: 'Quinn Quiet' }], false)
+      })
+      s.When('the admin opens the dashboard', async () => {
+        wrapper = await mountDashboard(db)
+        await flush()
+      })
+      s.Then('that party shows no Text or WhatsApp link', () => {
+        const links = messageLinks(wrapper, 'The Quiets')
+        expect(links.sms).toBe('')
+        expect(links.whatsapp).toBe('')
       })
     })
   })
