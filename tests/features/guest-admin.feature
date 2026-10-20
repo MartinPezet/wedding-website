@@ -187,3 +187,34 @@ Feature: Guest admin
       Given a visitor without an admin session
       When they post an edit or delete request directly to the save-the-date response endpoint
       Then access is refused and no data is changed
+
+  @req:text-messages-to-parties-from-the-dashboard
+  Rule: Text messages to parties from the dashboard
+    Editable message box with {name}, {link} and {food_link} placeholders; per-party Text (sms:) and WhatsApp (wa.me) links
+    pre-filled with that party's message, sent from the admin's own phone. Nothing is sent by the site.
+
+    Scenario: Reminder pre-filled for an outstanding party
+      Given an outstanding party with a contact phone
+      When the admin opens the dashboard and selects the not-yet-responded filter
+      Then the party has a Text link and a WhatsApp link to its number whose message is the default reminder containing the party name and RSVP link
+
+    Scenario: Edited message used for every party
+      Given two parties with contact phones
+      When the admin replaces the message box text with "Hi {name}, coaches leave at 4pm. Details: {link}"
+      Then each party's Text and WhatsApp links carry that message with its own name and RSVP link filled in
+
+    Scenario: Food link placeholder
+      Given an outstanding party with a contact phone
+      When the admin replaces the message box text with "Hi {name}, pick your meals: {food_link}"
+      Then the party's Text and WhatsApp links carry that message with its name and its food-choice link filled in
+
+    Scenario: Party without a phone
+      Given a party with no contact phone
+      When the admin opens the dashboard
+      Then that party shows no Text or WhatsApp link
+
+    @manual
+    Scenario: Link opens the messaging app
+      Given the dashboard open on the admin's phone
+      When the admin taps a party's Text or WhatsApp link
+      Then the messaging app opens addressed to that party's number with the message pre-filled, ready to send

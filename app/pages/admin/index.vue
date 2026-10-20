@@ -41,10 +41,18 @@ const filtered = computed(() => {
   }
 })
 
-const rsvpLink = (party: AdminParty) => {
+// the token gate accepts ?t= on any page, so a link to any path lands the party signed in
+const rsvpLink = (party: AdminParty, path = '/') => {
   const origin = import.meta.client ? window.location.origin : ''
-  return `${origin}/?t=${party.token}`
+  return `${origin}${path}?t=${party.token}`
 }
+
+const message = ref(DEFAULT_MESSAGE)
+const messageFor = (party: AdminParty) => fillMessage(message.value, {
+  name: party.name,
+  link: rsvpLink(party),
+  food_link: rsvpLink(party, '/menu'),
+})
 
 const copied = ref(0)
 async function copyLink(party: AdminParty) {
@@ -158,6 +166,22 @@ const statCards = computed(() => [
       </a>
     </div>
 
+    <details class="mt-3 rounded-xl border border-ink/10 bg-white/70 p-4">
+      <summary class="cursor-pointer text-sm font-semibold text-leaf-deep">Text guests</summary>
+      <label for="message" class="mt-3 block text-sm text-ink/70">
+        Message — <code>{name}</code>, <code>{link}</code> (RSVP) and <code>{food_link}</code> (menu choices) are filled in per party.
+        Filter to “Not yet responded” to chase RSVPs.
+      </label>
+      <textarea
+        id="message"
+        v-model="message"
+        name="message"
+        rows="4"
+        class="mt-2 w-full rounded-lg border border-leaf/40 bg-white/70 px-3 py-2 text-sm text-ink"
+      />
+      <p class="mt-1 text-xs text-ink/60">Tap Text or WhatsApp on a party to open your phone with the message ready to send.</p>
+    </details>
+
     <ul class="mt-3 flex flex-col gap-3" data-testid="party-list">
       <li v-for="party in filtered" :key="party.id" class="rounded-xl border border-ink/10 bg-white/70 p-4">
         <div class="flex flex-wrap items-center gap-2">
@@ -171,7 +195,17 @@ const statCards = computed(() => [
         </div>
         <p class="mt-1 text-sm text-ink/70">{{ party.guests.map(guest => guest.name).join(', ') }}</p>
         <div class="mt-2 flex flex-wrap items-center gap-3 text-sm">
-          <a v-if="party.phone" :href="`tel:${party.phone}`" class="text-leaf-deep underline">{{ party.phone }}</a>
+          <template v-if="party.phone">
+            <a :href="`tel:${party.phone}`" class="text-leaf-deep underline">{{ party.phone }}</a>
+            <a :href="smsHref(party.phone, messageFor(party))" class="text-petal-deep hover:text-petal" data-testid="text-link">Text</a>
+            <a
+              :href="whatsappHref(party.phone, messageFor(party))"
+              target="_blank"
+              rel="noopener"
+              class="text-petal-deep hover:text-petal"
+              data-testid="whatsapp-link"
+            >WhatsApp</a>
+          </template>
           <span class="hidden text-ink/40 sm:inline" data-testid="rsvp-link">{{ rsvpLink(party) }}</span>
           <button type="button" class="text-petal-deep hover:text-petal" @click="copyLink(party)">
             {{ copied === party.id ? 'Copied!' : 'Copy RSVP link' }}
