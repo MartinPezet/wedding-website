@@ -91,6 +91,8 @@ export interface Rooms {
    * what route a payment to the right account, so they must survive intact.
    */
   paymentUrl: string
+  /** for guests who can't use the Monzo link; sort code stored as bare digits */
+  bankTransfer: { name: string, sortCode: string, accountNumber: string }
   prices: {
     /** night before: per person whatever the choice */
     before: { perPerson: number }

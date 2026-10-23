@@ -55,7 +55,7 @@ The admin SHALL be able to import parties and guests from a CSV file, with a val
 - **THEN** the preview marks those rows with errors and they are not imported until corrected
 
 ### Requirement: Wedding date and deadline editable in admin UI
-The admin SHALL be able to edit the wedding date, the RSVP deadline, the food-choice deadline, and the payment deadline from a settings page, taking effect immediately without redeploy. The admin SHALL also be able to toggle the food-choice page on or off from the same settings page.
+The admin SHALL be able to edit the wedding date, the RSVP deadline, the food-choice deadline, and the payment deadline from a settings page, taking effect immediately without redeploy. The admin SHALL also be able to toggle the food-choice page on or off from the same settings page, and toggle the RSVP page's Monzo "Pay here" link on or off (defaulting to on).
 
 #### Scenario: Deadline moved
 - **WHEN** the admin changes the RSVP deadline
@@ -68,6 +68,10 @@ The admin SHALL be able to edit the wedding date, the RSVP deadline, the food-ch
 #### Scenario: Food-choice toggled on
 - **WHEN** the admin switches the food-choice toggle on
 - **THEN** the food-choice page immediately shows the meal form to parties instead of closed-state copy
+
+#### Scenario: Monzo link toggled off
+- **WHEN** the admin switches the Monzo link toggle off
+- **THEN** the RSVP data served to parties immediately reports the Monzo link as disabled
 
 ### Requirement: Save-the-date responses in admin
 The admin SHALL be able to view every save-the-date response — household name, phone, full postal address, both room-night interest flags, and when it was submitted — on an admin-authenticated page, newest first, alongside totals for how many households want the night before, the night of, and either night. The page SHALL show an empty state before any response arrives. The admin SHALL also be able to edit a response's name, phone, address, and room-night flags, and to delete a response, with deletion requiring confirmation.

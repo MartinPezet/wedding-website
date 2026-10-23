@@ -18,6 +18,12 @@ export default defineEventHandler(async (event) => {
     }
     input.foodChoiceOpen = body.foodChoiceOpen
   }
+  if (body?.monzoLinkEnabled !== undefined) {
+    if (typeof body.monzoLinkEnabled !== 'boolean') {
+      throw createError({ statusCode: 400, message: 'Invalid value for monzoLinkEnabled.' })
+    }
+    input.monzoLinkEnabled = body.monzoLinkEnabled
+  }
   await saveSettings(useDb(), input)
   return { ok: true }
 })

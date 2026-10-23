@@ -41,6 +41,12 @@ export async function getPaymentDeadline(db: Db): Promise<string | undefined> {
   return row?.value
 }
 
+/** admin toggle; on unless explicitly switched off */
+export async function getMonzoLinkEnabled(db: Db): Promise<boolean> {
+  const row = await db.query.settings.findFirst({ where: eq(settings.key, 'monzo_link_enabled') })
+  return row?.value !== 'false'
+}
+
 export async function getRoomRequests(db: Db, partyId: number) {
   const rows = await db.select().from(roomRequests).where(eq(roomRequests.partyId, partyId))
   return rows.toSorted((a, b) => a.sortOrder - b.sortOrder)

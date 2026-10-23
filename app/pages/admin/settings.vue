@@ -9,6 +9,7 @@ const rsvpDeadline = ref(data.value?.rsvpDeadline?.slice(0, 10) ?? '')
 const foodDeadline = ref(data.value?.foodDeadline?.slice(0, 10) ?? '')
 const paymentDeadline = ref(data.value?.paymentDeadline?.slice(0, 10) ?? '')
 const foodChoiceOpen = ref(data.value?.foodChoiceOpen ?? false)
+const monzoLinkEnabled = ref(data.value?.monzoLinkEnabled ?? true)
 const notice = ref('')
 const error = ref('')
 const pending = ref(false)
@@ -27,6 +28,7 @@ async function submit() {
         foodDeadline: foodDeadline.value ? `${foodDeadline.value}T23:59:59Z` : undefined,
         paymentDeadline: paymentDeadline.value ? `${paymentDeadline.value}T23:59:59Z` : undefined,
         foodChoiceOpen: foodChoiceOpen.value,
+        monzoLinkEnabled: monzoLinkEnabled.value,
       },
     })
     notice.value = 'Settings saved — live immediately.'
@@ -63,6 +65,10 @@ async function submit() {
       <label class="flex items-center gap-2 text-sm text-leaf-deep">
         <input v-model="foodChoiceOpen" name="foodChoiceOpen" type="checkbox" class="size-4 rounded border-leaf/40">
         Menu page open for choices
+      </label>
+      <label class="flex items-center gap-2 text-sm text-leaf-deep">
+        <input v-model="monzoLinkEnabled" name="monzoLinkEnabled" type="checkbox" class="size-4 rounded border-leaf/40">
+        Show Monzo "Pay here" button on RSVP page
       </label>
       <button type="submit" :disabled="pending" class="self-start rounded-full bg-leaf-deep px-5 py-2 text-cream hover:bg-leaf disabled:opacity-60">
         {{ pending ? 'Saving…' : 'Save settings' }}

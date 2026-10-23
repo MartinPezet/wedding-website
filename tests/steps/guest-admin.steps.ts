@@ -557,6 +557,35 @@ describeFeature(feature, (f) => {
         expect((await saveFood(db, partyId, { guests: [{ id: guestId, ...fullChoices() }] })).ok).toBe(true)
       })
     })
+
+    r.RuleScenario('Monzo link toggled off', (s) => {
+      let db: Db
+      let saved: Record<string, unknown> | null = null
+      let wrapper: Wrapper
+      s.Given('the Monzo link toggle is on by default', async () => {
+        db = await freshDb()
+        const { getMonzoLinkEnabled } = await import('../../server/utils/rsvp')
+        expect(await getMonzoLinkEnabled(db)).toBe(true)
+        wrapper = await mountSettingsPage((body) => {
+          saved = body
+        })
+        expect((wrapper.find('input[name="monzoLinkEnabled"]').element as HTMLInputElement).checked).toBe(true)
+      })
+      s.When('the admin switches it off', async () => {
+        await wrapper.find('input[name="monzoLinkEnabled"]').setValue(false)
+        await wrapper.find('form').trigger('submit')
+        await flush()
+        expect(saved).toMatchObject({ monzoLinkEnabled: false })
+        const { saveSettings } = await adminUtil()
+        await saveSettings(db, { monzoLinkEnabled: false })
+      })
+      s.Then('the RSVP data served to parties immediately reports the Monzo link as disabled', async () => {
+        const { getMonzoLinkEnabled } = await import('../../server/utils/rsvp')
+        expect(await getMonzoLinkEnabled(db)).toBe(false)
+        const { getAdminSettings } = await adminUtil()
+        expect((await getAdminSettings(db)).monzoLinkEnabled).toBe(false)
+      })
+    })
   })
 
   f.Rule('Room request visibility on the dashboard', (r) => {

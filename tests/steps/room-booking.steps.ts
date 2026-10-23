@@ -2,8 +2,9 @@
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import { describeFeature, loadFeature, setVitestCucumberConfiguration } from '@amiceli/vitest-cucumber'
 import { readBody } from 'h3'
-import { expect } from 'vitest'
+import { expect, vi } from 'vitest'
 import { clearNuxtData } from '#imports'
+import { rooms as roomContent } from '#shared/content'
 import type { RoomChoice, RoomNight } from '#shared/content'
 import { maxRoomsPerNight, paymentReference, roomChoiceLabel, roomTotal } from '#shared/utils/rooms'
 
@@ -26,6 +27,7 @@ interface RsvpData {
   phone: string | null
   deadline: string | null
   paymentDeadline: string | null
+  monzoLinkEnabled?: boolean
   locked: boolean
 }
 
@@ -365,6 +367,76 @@ describeFeature(feature, (f) => {
       s.Then('no total or Monzo link is shown', () => {
         expect(wrapper.find('[data-room-total]').exists()).toBe(false)
         expect(wrapper.find('a[data-monzo-link]').exists()).toBe(false)
+      })
+    })
+
+    r.RuleScenario('Monzo link switched off', (s) => {
+      let wrapper: Wrapper
+      let data: RsvpData
+      s.Given('the admin has switched the Monzo link off and a party has rooms booked', () => {
+        data = rsvpData({ rooms: [room('of', 'our_room', { occupants: 2 })], monzoLinkEnabled: false })
+      })
+      s.When('the RSVP page renders', async () => {
+        wrapper = await mountRsvp(data)
+      })
+      s.Then('the total and bank transfer details are shown but no Monzo link', () => {
+        expect(wrapper.find('[data-room-total]').text()).toContain('£160')
+        expect(wrapper.find('[data-bank-detail="reference"]').exists()).toBe(true)
+        expect(wrapper.find('a[data-monzo-link]').exists()).toBe(false)
+      })
+    })
+  })
+
+  f.Rule('Bank transfer details', (r) => {
+    r.RuleScenario('Bank details shown with reference', (s) => {
+      let wrapper: Wrapper
+      let data: RsvpData
+      s.Given('a party with rooms booked', () => {
+        data = rsvpData({ rooms: [room('of', 'our_room', { occupants: 2 })] })
+      })
+      s.When('the RSVP page renders', async () => {
+        wrapper = await mountRsvp(data)
+      })
+      s.Then(`the page shows the payee name, sort code, account number and the party's reference, each with a copy button`, () => {
+        const expected = {
+          'name': roomContent.bankTransfer.name,
+          'sort-code': roomContent.bankTransfer.sortCode,
+          'account': roomContent.bankTransfer.accountNumber,
+          'reference': paymentReference(data.partyId),
+        }
+        for (const [field, value] of Object.entries(expected)) {
+          const row = wrapper.find(`[data-bank-detail="${field}"]`)
+          expect(row.exists(), field).toBe(true)
+          // sort code is displayed dashed (04-00-03) but stored as digits
+          expect(row.text().replace(/(\d)-(?=\d)/g, '$1')).toContain(value)
+          expect(row.find('button[data-copy]').exists(), field).toBe(true)
+        }
+      })
+    })
+
+    r.RuleScenario('Copy button copies the value', (s) => {
+      let wrapper: Wrapper
+      const writeText = vi.fn(async (_text: string) => {})
+      s.Given('the RSVP page renders bank details', async () => {
+        Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true })
+        wrapper = await mountRsvp(rsvpData({ rooms: [room('of', 'our_room', { occupants: 2 })] }))
+      })
+      s.When('a guest presses the copy button next to the reference', async () => {
+        await wrapper.find('[data-bank-detail="reference"] button[data-copy]').trigger('click')
+      })
+      s.Then(`the party's reference is written to the clipboard`, () => {
+        expect(writeText).toHaveBeenCalledWith(paymentReference(12))
+      })
+    })
+
+    r.RuleScenario('No rooms, no bank details shown', (s) => {
+      let wrapper: Wrapper
+      s.Given('a party with no rooms booked', () => {})
+      s.When('the RSVP page renders', async () => {
+        wrapper = await mountRsvp(rsvpData({ rooms: [] }))
+      })
+      s.Then('no bank details are shown', () => {
+        expect(wrapper.find('[data-bank-detail]').exists()).toBe(false)
       })
     })
   })

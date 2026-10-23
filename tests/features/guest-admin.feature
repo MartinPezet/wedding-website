@@ -87,6 +87,11 @@ Feature: Guest admin
       When the admin switches it on
       Then the food-choice page immediately shows the meal form to parties instead of closed-state copy
 
+    Scenario: Monzo link toggled off
+      Given the Monzo link toggle is on by default
+      When the admin switches it off
+      Then the RSVP data served to parties immediately reports the Monzo link as disabled
+
   @req:room-request-visibility-on-the-dashboard
   Rule: Room request visibility on the dashboard
     Room-request counts per night and per choice shown alongside existing totals.

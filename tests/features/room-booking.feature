@@ -84,6 +84,30 @@ Feature: Room booking
       When the RSVP page renders
       Then no total or Monzo link is shown
 
+    Scenario: Monzo link switched off
+      Given the admin has switched the Monzo link off and a party has rooms booked
+      When the RSVP page renders
+      Then the total and bank transfer details are shown but no Monzo link
+
+  @req:bank-transfer-details
+  Rule: Bank transfer details
+    Payee name, sort code, account number and reference shown next to the Monzo link, each copyable.
+
+    Scenario: Bank details shown with reference
+      Given a party with rooms booked
+      When the RSVP page renders
+      Then the page shows the payee name, sort code, account number and the party's reference, each with a copy button
+
+    Scenario: Copy button copies the value
+      Given the RSVP page renders bank details
+      When a guest presses the copy button next to the reference
+      Then the party's reference is written to the clipboard
+
+    Scenario: No rooms, no bank details shown
+      Given a party with no rooms booked
+      When the RSVP page renders
+      Then no bank details are shown
+
   @req:room-booking-validated-server-side
   Rule: Room booking validated server-side
     Unrecognised choices and missing share-with names are rejected; resubmission replaces prior rooms.

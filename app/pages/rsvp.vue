@@ -81,6 +81,32 @@ const chosenRooms = computed(() =>
 
 const total = computed(() => roomTotal(chosenRooms.value));
 
+// copy value is what a banking app wants pasted; display may be prettier
+const bankDetails = computed(() => {
+  const { name, sortCode, accountNumber } = roomContent.bankTransfer;
+  const reference = paymentReference(data.value!.partyId!);
+  return [
+    { field: "name", label: "Name", value: name, display: name },
+    {
+      field: "sort-code",
+      label: "Sort code",
+      value: sortCode,
+      display: sortCode.replace(/(\d{2})(?=\d)/g, "$1-"),
+    },
+    { field: "account", label: "Account number", value: accountNumber, display: accountNumber },
+    { field: "reference", label: "Reference", value: reference, display: reference },
+  ];
+});
+
+const copiedField = ref("");
+async function copyDetail(field: string, value: string) {
+  await navigator.clipboard.writeText(value);
+  copiedField.value = field;
+  setTimeout(() => {
+    copiedField.value = "";
+  }, 1500);
+}
+
 /** what one row of the form currently costs, using its derived occupancy */
 const priceOf = (night: RoomNight, index: number) => {
   const room = chosenRooms.value.filter((entry) => entry.night === night)[
@@ -461,6 +487,7 @@ const fieldClass =
               £{{ total }}
             </p>
             <a
+              v-if="data?.monzoLinkEnabled !== false"
               data-monzo-link
               :href="monzoLink(total, data.partyId!)"
               target="_blank"
@@ -469,6 +496,36 @@ const fieldClass =
             >
               Pay here
             </a>
+          </div>
+          <div class="mt-4 border-t border-petal/30 pt-4">
+            <p class="text-sm text-leaf-deep">
+              Or pay by bank transfer - please use your reference so we can
+              match it to you.
+            </p>
+            <dl class="mt-3 flex flex-col gap-2">
+              <div
+                v-for="detail in bankDetails"
+                :key="detail.field"
+                :data-bank-detail="detail.field"
+                class="flex items-center justify-between gap-3"
+              >
+                <dt class="text-xs uppercase tracking-widest text-petal-deep">
+                  {{ detail.label }}
+                </dt>
+                <dd class="flex items-center gap-3">
+                  <span class="font-display text-ink">{{ detail.display }}</span>
+                  <button
+                    data-copy
+                    type="button"
+                    :aria-label="`Copy ${detail.label.toLowerCase()}`"
+                    class="rounded-full border border-leaf/40 px-3 py-1 text-xs text-leaf-deep transition hover:border-petal hover:text-petal"
+                    @click="copyDetail(detail.field, detail.value)"
+                  >
+                    {{ copiedField === detail.field ? "Copied" : "Copy" }}
+                  </button>
+                </dd>
+              </div>
+            </dl>
           </div>
         </div>
       </section>
