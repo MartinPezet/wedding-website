@@ -128,6 +128,8 @@ export interface AdminSettings {
   paymentDeadline?: string
   /** the food-choice page shows closed-state copy until this is on */
   foodChoiceOpen?: boolean
+  /** the RSVP page's Monzo "Pay here" link; on unless switched off */
+  monzoLinkEnabled?: boolean
 }
 
 export const DATE_SETTING_KEYS = {
@@ -140,6 +142,7 @@ export const DATE_SETTING_KEYS = {
 export type AdminDateSetting = keyof typeof DATE_SETTING_KEYS
 
 const FOOD_CHOICE_OPEN_KEY = 'food_choice_open'
+const MONZO_LINK_ENABLED_KEY = 'monzo_link_enabled'
 
 export async function getAdminSettings(db: Db): Promise<AdminSettings> {
   const rows = await db.select().from(settings)
@@ -147,7 +150,11 @@ export async function getAdminSettings(db: Db): Promise<AdminSettings> {
   const dates = Object.fromEntries(
     Object.entries(DATE_SETTING_KEYS).map(([field, key]) => [field, byKey.get(key)]),
   ) as Record<AdminDateSetting, string | undefined>
-  return { ...dates, foodChoiceOpen: byKey.get(FOOD_CHOICE_OPEN_KEY) === 'true' }
+  return {
+    ...dates,
+    foodChoiceOpen: byKey.get(FOOD_CHOICE_OPEN_KEY) === 'true',
+    monzoLinkEnabled: byKey.get(MONZO_LINK_ENABLED_KEY) !== 'false',
+  }
 }
 
 export async function saveSettings(db: Db, input: AdminSettings) {
@@ -158,6 +165,9 @@ export async function saveSettings(db: Db, input: AdminSettings) {
     })
   if (input.foodChoiceOpen !== undefined) {
     entries.push([FOOD_CHOICE_OPEN_KEY, String(input.foodChoiceOpen)])
+  }
+  if (input.monzoLinkEnabled !== undefined) {
+    entries.push([MONZO_LINK_ENABLED_KEY, String(input.monzoLinkEnabled)])
   }
   for (const [key, value] of entries) {
     await db.insert(settings).values({ key, value })

@@ -67,6 +67,25 @@ The RSVP page SHALL show a running total of the party's current room bookings (b
 - **WHEN** a party has no rooms booked
 - **THEN** no total or Monzo link is shown
 
+#### Scenario: Monzo link switched off
+- **WHEN** the admin has switched the Monzo link off and a party has rooms booked
+- **THEN** the total and bank transfer details are shown but no Monzo link
+
+### Requirement: Bank transfer details
+Alongside the Monzo link, the RSVP page SHALL show bank transfer details (payee name, sort code, account number) and the party's payment reference, each with a button that copies that value to the clipboard. This lets guests who cannot use the Monzo link (e.g. overseas cards, Monzo.me limits) pay by transfer with a reference reconciliation can still match.
+
+#### Scenario: Bank details shown with reference
+- **WHEN** a party has rooms booked
+- **THEN** the page shows the payee name, sort code, account number and the party's reference, each with a copy button
+
+#### Scenario: Copy button copies the value
+- **WHEN** a guest presses the copy button next to the reference
+- **THEN** the party's reference is written to the clipboard
+
+#### Scenario: No rooms, no bank details shown
+- **WHEN** a party has no rooms booked
+- **THEN** no bank details are shown
+
 ### Requirement: Room booking validated server-side
 The server SHALL reject a room-booking submission whose choice is not one of the three defined values, or whose "share with another party" entry is missing the shared-with name. A party's full set of room requests SHALL be replaced (not appended to) on every RSVP submission.
 

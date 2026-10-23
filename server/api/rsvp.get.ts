@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm'
 import { parties } from '../db/schema'
-import { getDeadline, getPaymentDeadline, getRoomRequests } from '../utils/rsvp'
+import { getDeadline, getMonzoLinkEnabled, getPaymentDeadline, getRoomRequests } from '../utils/rsvp'
 
 export default defineEventHandler(async (event) => {
   const session = await getUserSession(event)
@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
       })
     : undefined
   if (!party) {
-    return { partyId: null, party: null, guests: [], rooms: [], phone: null, deadline: null, paymentDeadline: null, locked: false }
+    return { partyId: null, party: null, guests: [], rooms: [], phone: null, deadline: null, paymentDeadline: null, monzoLinkEnabled: true, locked: false }
   }
 
   const deadline = await getDeadline(db)
@@ -43,6 +43,7 @@ export default defineEventHandler(async (event) => {
     phone: party.guests[0]?.phone ?? null,
     deadline: deadline ?? null,
     paymentDeadline: await getPaymentDeadline(db) ?? null,
+    monzoLinkEnabled: await getMonzoLinkEnabled(db),
     locked: Boolean(deadline && Date.now() > Date.parse(deadline)),
   }
 })

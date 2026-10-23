@@ -1,5 +1,10 @@
 {
   "paymentUrl": "https://monzo.me/martinpezet1?h=cxeKct&account_type=joint",
+  "bankTransfer": {
+    "name": "Martin Pezet",
+    "sortCode": "040003",
+    "accountNumber": "08131583"
+  },
   "prices": {
     "before": {
       "perPerson": 95
