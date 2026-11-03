@@ -8,7 +8,9 @@ interface AdminGuest {
   isChild: boolean
   phone: string | null
   attending: boolean | null
-  mealChoiceId: string | null
+  starterChoiceId: string | null
+  mainChoiceId: string | null
+  dessertChoiceId: string | null
   dietaryNotes: string | null
 }
 
@@ -26,7 +28,7 @@ interface AdminParty {
 const { data: stats } = await useFetch('/api/admin/stats')
 const { data: partyData } = await useFetch<{ parties: AdminParty[] }>('/api/admin/parties')
 
-const filter = ref<'all' | 'responded' | 'outstanding' | 'declined'>('all')
+const filter = ref<'all' | 'responded' | 'outstanding' | 'declined' | 'food'>('all')
 
 const allDeclined = (party: AdminParty) =>
   party.guests.length > 0 && party.guests.every(guest => guest.attending === false)
@@ -37,6 +39,7 @@ const filtered = computed(() => {
     case 'responded': return parties.filter(party => party.respondedAt)
     case 'outstanding': return parties.filter(party => !party.respondedAt)
     case 'declined': return parties.filter(party => party.respondedAt && allDeclined(party))
+    case 'food': return parties.filter(party => awaitingFoodChoice(party.guests))
     default: return parties
   }
 })
@@ -48,6 +51,12 @@ const rsvpLink = (party: AdminParty, path = '/') => {
 }
 
 const message = ref(DEFAULT_MESSAGE)
+// the food chase wants the menu nudge; only swap a stock message, never one the admin has edited
+watch(filter, (value) => {
+  if (message.value === DEFAULT_MESSAGE || message.value === FOOD_MESSAGE) {
+    message.value = value === 'food' ? FOOD_MESSAGE : DEFAULT_MESSAGE
+  }
+})
 const messageFor = (party: AdminParty) => fillMessage(message.value, {
   name: party.name,
   link: rsvpLink(party),
@@ -150,6 +159,7 @@ const statCards = computed(() => [
           <option value="responded">Responded</option>
           <option value="outstanding">Not yet responded</option>
           <option value="declined">Declined</option>
+          <option value="food">Food choice not made</option>
         </select>
       </label>
       <NuxtLink to="/admin/parties/new" class="rounded-full bg-leaf-deep px-4 py-1.5 text-sm text-cream hover:bg-leaf">
@@ -170,7 +180,7 @@ const statCards = computed(() => [
       <summary class="cursor-pointer text-sm font-semibold text-leaf-deep">Text guests</summary>
       <label for="message" class="mt-3 block text-sm text-ink/70">
         Message — <code>{name}</code>, <code>{link}</code> (RSVP) and <code>{food_link}</code> (menu choices) are filled in per party.
-        Filter to “Not yet responded” to chase RSVPs.
+        Filter to “Not yet responded” to chase RSVPs, or “Food choice not made” to chase menu choices.
       </label>
       <textarea
         id="message"

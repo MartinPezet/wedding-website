@@ -93,6 +93,7 @@ watch(
             exact-active-class="text-petal-deep hover:text-petal-deep"
             >RSVP</NuxtLink
           >
+          <MenuNavLink />
           <NuxtLink
             to="/gifts"
             class="hover:text-petal"

@@ -1,13 +1,16 @@
 // @vitest-environment nuxt
-import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
+import { mockNuxtImport, mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import { describeFeature, loadFeature, setVitestCucumberConfiguration } from '@amiceli/vitest-cucumber'
 import { readBody } from 'h3'
-import { expect } from 'vitest'
+import { expect, vi } from 'vitest'
 import { clearNuxtData } from '#imports'
 import { menu } from '#shared/content'
 import { COURSE_FIELDS, optionsFor } from '#shared/utils/menu'
 
 setVitestCucumberConfiguration({ excludeTags: ['manual'] })
+
+// the header nav only renders for a signed-in guest
+mockNuxtImport('useUserSession', () => () => ({ loggedIn: true }))
 
 const feature = await loadFeature('tests/features/food-choice.feature')
 
@@ -182,7 +185,7 @@ describeFeature(feature, (f) => {
           expect(select.exists(), `select for ${course.id}`).toBe(true)
           expect(select.attributes('required')).toBeDefined()
           for (const option of course.options) {
-            expect(select.html()).toContain(option.name)
+            expect(select.text()).toContain(option.name)
           }
         }
         expect(wrapper.find('textarea[name="dietary-1"]').exists()).toBe(true)
@@ -298,6 +301,61 @@ describeFeature(feature, (f) => {
       s.Then('it is rejected regardless of client state', async () => {
         expect(result.ok).toBe(false)
         expect((await storedGuest(db, ids.guestId)).mainChoiceId).toBeNull()
+      })
+    })
+  })
+
+  f.Rule('Menu presented and signposted', (r) => {
+    r.RuleScenario('Full menu shown above the choices', (s) => {
+      let wrapper: Wrapper
+      s.Given('the food-choice toggle is on', () => {})
+      s.When('a party opens the food-choice page', async () => {
+        wrapper = await mountMenu(foodData())
+      })
+      s.Then(`every course defined in menu.json is listed with each option's name and description, above the meal selectors`, () => {
+        const card = wrapper.find('[data-menu-card]')
+        expect(card.exists()).toBe(true)
+        for (const course of menu.courses) {
+          expect(card.text()).toContain(course.name)
+          for (const option of course.options) {
+            expect(card.text()).toContain(option.name)
+            expect(card.text()).toContain(option.description)
+          }
+        }
+        const html = wrapper.html()
+        expect(html.indexOf('data-menu-card')).toBeLessThan(html.indexOf('<select'))
+      })
+    })
+
+    const mountHeader = async (open: boolean) => {
+      clearNuxtData()
+      registerEndpoint('/api/food', { method: 'GET', handler: () => foodData({ open }) })
+      const layout = (await import(`../../app/layouts/${'default'}.vue`)).default
+      return mountSuspended(layout)
+    }
+
+    r.RuleScenario('Header links to the menu while open', (s) => {
+      let wrapper: Wrapper
+      s.Given('the food-choice toggle is on', () => {})
+      s.When('a signed-in guest views the site header', async () => {
+        wrapper = await mountHeader(true)
+      })
+      s.Then('the header navigation includes a Menu link to the food-choice page', async () => {
+        await vi.waitUntil(() => wrapper.find('#site-nav a[href="/menu"]').exists(), { timeout: 3000 })
+        expect(wrapper.find('#site-nav a[href="/menu"]').text()).toMatch(/menu/i)
+      })
+    })
+
+    r.RuleScenario('No header link while closed', (s) => {
+      let wrapper: Wrapper
+      s.Given('the food-choice toggle is off', () => {})
+      s.When('a signed-in guest views the site header', async () => {
+        wrapper = await mountHeader(false)
+      })
+      s.Then('the header navigation has no Menu link', async () => {
+        await new Promise(resolve => setTimeout(resolve, 50))
+        expect(wrapper.find('#site-nav').exists()).toBe(true)
+        expect(wrapper.find('#site-nav a[href="/menu"]').exists()).toBe(false)
       })
     })
   })

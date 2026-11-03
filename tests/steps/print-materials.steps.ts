@@ -276,9 +276,9 @@ describeFeature(feature, (f) => {
         const a = await createTable(db, { name: 'Table A', shape: 'round', capacity: 8 })
         const b = await createTable(db, { name: 'Table B', shape: 'rect', capacity: 6 })
         // deliberately seed out of final order; the view must sort by table then seat
-        await seatGuest(db, { party: 'P2', guest: 'Bob Berry', tableId: b.id, seatIndex: 0, mainChoiceId: 'veggie' })
-        await seatGuest(db, { party: 'P1', guest: 'Cara Cherry', tableId: a.id, seatIndex: 1, mainChoiceId: 'fish' })
-        await seatGuest(db, { party: 'P0', guest: 'Anna Apple', tableId: a.id, seatIndex: 0, mainChoiceId: 'beef' })
+        await seatGuest(db, { party: 'P2', guest: 'Bob Berry', tableId: b.id, seatIndex: 0, mainChoiceId: 'pork-belly' })
+        await seatGuest(db, { party: 'P1', guest: 'Cara Cherry', tableId: a.id, seatIndex: 1, mainChoiceId: 'cauliflower' })
+        await seatGuest(db, { party: 'P0', guest: 'Anna Apple', tableId: a.id, seatIndex: 0, mainChoiceId: 'pork-belly' })
       })
       s.When('the admin renders place cards', async () => {
         clearNuxtData()
@@ -291,9 +291,9 @@ describeFeature(feature, (f) => {
         // order: Table A seat 0, Table A seat 1, Table B seat 0
         expect(cards.map(card => card.attributes('data-place-card'))).toEqual(['Anna Apple', 'Cara Cherry', 'Bob Berry'])
         expect(cards[0]!.text()).toContain('Anna Apple')
-        expect(cards[0]!.text()).toContain('Roast Beef')
-        expect(cards[1]!.text()).toContain('Pan-Seared Salmon')
-        expect(cards[2]!.text()).toContain('Wild Mushroom Wellington')
+        expect(cards[0]!.text()).toContain('Twice-Cooked Belly of Pork')
+        expect(cards[1]!.text()).toContain('Spiced Cauliflower Steak (Ve)')
+        expect(cards[2]!.text()).toContain('Twice-Cooked Belly of Pork')
         // fold and crop guides present
         expect(wrapper.find('[data-fold]').exists()).toBe(true)
         expect(wrapper.find('[data-crop]').exists()).toBe(true)

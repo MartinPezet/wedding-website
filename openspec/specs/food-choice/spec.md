@@ -44,3 +44,18 @@ The food-choice page SHALL lock at its own deadline, set independently from the 
 - **WHEN** a food-choice submission reaches the server after the food deadline
 - **THEN** it is rejected regardless of client state
 
+
+### Requirement: Menu presented and signposted
+While the food-choice toggle is on, the food-choice page SHALL present the full menu, every course with each option's name and description, in a menu-card layout above the meal selectors. While the toggle is on, the site header navigation SHALL include a link to the food-choice page; while off, it SHALL NOT.
+
+#### Scenario: Full menu shown above the choices
+- **WHEN** a party opens the food-choice page while the toggle is on
+- **THEN** every course defined in menu.json is listed with each option's name and description, above the meal selectors
+
+#### Scenario: Header links to the menu while open
+- **WHEN** a signed-in guest views the site while the toggle is on
+- **THEN** the header navigation includes a Menu link to the food-choice page
+
+#### Scenario: No header link while closed
+- **WHEN** a signed-in guest views the site while the toggle is off
+- **THEN** the header navigation has no Menu link

@@ -181,6 +181,50 @@ describeFeature(feature, (f) => {
     })
   })
 
+  f.Rule('Food-choice chase filter', (r) => {
+    r.RuleScenario('Food chase list', (s) => {
+      let db: Db
+      let wrapper: Wrapper
+      let hungryToken = ''
+      s.Given('parties whose attending guests have and have not chosen every course', async () => {
+        db = await freshDb()
+        await seedParty(db, 'The Fulls', [{ name: 'Amy Full', attending: true, ...fullChoices() }], true)
+        const hungry = await seedParty(db, 'The Hungrys', [
+          { name: 'Hal Hungry', phone: '+447911123456', attending: true, ...fullChoices() },
+          // chose a starter only: still owes main and dessert
+          { name: 'Hana Hungry', attending: true, starterChoiceId: courseOptions('starter')[0]!.id },
+        ], true)
+        hungryToken = hungry.token
+        await seedParty(db, 'The Nopes', [{ name: 'Nia Nope', attending: false }], true)
+        await seedParty(db, 'The Ghosts', [{ name: 'Gil Ghost' }], false)
+      })
+      s.When('the admin selects the food-choice-not-made filter', async () => {
+        registerEndpoint('/api/admin/stats', {
+          method: 'GET',
+          handler: async () => (await adminUtil()).getDashboardStats(db),
+        })
+        registerEndpoint('/api/admin/parties', { method: 'GET', handler: async () => ({ parties: await listParties(db) }) })
+        wrapper = await mountAdminPage('index')
+        await wrapper.find('select[name="filter"]').setValue('food')
+        await flush()
+      })
+      s.Then('only parties with an attending guest missing a course choice are listed, each with Text and WhatsApp links pre-filled with its food-choice link', () => {
+        const list = wrapper.find('[data-testid="party-list"]')
+        expect(list.text()).toContain('The Hungrys')
+        for (const other of ['The Fulls', 'The Nopes', 'The Ghosts']) {
+          expect(list.text()).not.toContain(other)
+        }
+        const menuLink = encodeURIComponent(`/menu?t=${hungryToken}`)
+        const text = list.find('a[data-testid="text-link"]')
+        expect(text.attributes('href')).toMatch(/^sms:\+447911123456\?/)
+        expect(text.attributes('href')).toContain(menuLink)
+        const whatsapp = list.find('a[data-testid="whatsapp-link"]')
+        expect(whatsapp.attributes('href')).toMatch(/^https:\/\/wa\.me\/447911123456\?text=/)
+        expect(whatsapp.attributes('href')).toContain(menuLink)
+      })
+    })
+  })
+
   f.Rule('Party and guest CRUD', (r) => {
     r.RuleScenario('Manual party creation', (s) => {
       let db: Db

@@ -205,6 +205,36 @@ const fieldClass =
         >
       </p>
 
+      <!-- the printed-menu card: every course and dish, before the choosing -->
+      <div
+        v-reveal
+        data-menu-card
+        class="mt-8 rounded-2xl border border-leaf/30 bg-white/60 px-6 py-8 text-center"
+      >
+        <section
+          v-for="(course, index) in menu.courses"
+          :key="course.id"
+          :class="{ 'mt-8': index > 0 }"
+        >
+          <FloralDivider v-if="index > 0" class="mx-auto mb-8 w-24" />
+          <h2
+            class="text-[11px] uppercase tracking-[0.34em] text-petal-deep"
+          >
+            {{ course.name }}
+          </h2>
+          <div
+            v-for="option in course.options"
+            :key="option.id"
+            class="mt-5"
+          >
+            <p class="font-display text-xl text-ink">{{ option.name }}</p>
+            <p class="mt-1 text-sm italic text-leaf-deep">
+              {{ option.description }}
+            </p>
+          </div>
+        </section>
+      </div>
+
       <fieldset
         v-for="guest in guests"
         :key="guest.id"
@@ -258,7 +288,7 @@ const fieldClass =
           v-model="guest.dietaryNotes"
           :name="`dietary-${guest.id}`"
           rows="2"
-          placeholder="Dietary requirements or allergies"
+          placeholder="Any dietary requirements or allergies (including vegan, vegetarian, etc)"
           class="mt-3 w-full"
           :class="fieldClass"
         />

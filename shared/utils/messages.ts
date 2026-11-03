@@ -1,6 +1,9 @@
 export const DEFAULT_MESSAGE
   = 'Hi {name}! Just a friendly nudge — we haven\'t had your RSVP for the wedding yet. It only takes a minute: {link}'
 
+export const FOOD_MESSAGE
+  = 'Hi {name}! Our menu is ready — please choose your meals for the wedding here: {food_link}'
+
 /** `{key}` → `values[key]`; unknown keys stay as typed, and the function replacer keeps `$` in values literal */
 export const fillMessage = (template: string, values: Record<string, string>) =>
   template.replace(/\{(\w+)\}/g, (placeholder, key: string) => values[key] ?? placeholder)

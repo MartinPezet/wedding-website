@@ -53,3 +53,22 @@ Feature: Food choice
       Given a food-choice submission arriving after the food deadline
       When the server processes it
       Then it is rejected regardless of client state
+
+  @req:menu-presented-and-signposted
+  Rule: Menu presented and signposted
+    The full menu is shown above the selectors, and the header links to it while food choice is open.
+
+    Scenario: Full menu shown above the choices
+      Given the food-choice toggle is on
+      When a party opens the food-choice page
+      Then every course defined in menu.json is listed with each option's name and description, above the meal selectors
+
+    Scenario: Header links to the menu while open
+      Given the food-choice toggle is on
+      When a signed-in guest views the site header
+      Then the header navigation includes a Menu link to the food-choice page
+
+    Scenario: No header link while closed
+      Given the food-choice toggle is off
+      When a signed-in guest views the site header
+      Then the header navigation has no Menu link
