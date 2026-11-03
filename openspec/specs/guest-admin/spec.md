@@ -17,6 +17,13 @@ The admin SHALL be able to filter the party/guest list by response state, includ
 - **WHEN** the admin selects the "not yet responded" filter
 - **THEN** only parties without a submitted RSVP are listed, with phone numbers and RSVP links available
 
+### Requirement: Food-choice chase filter
+The admin SHALL be able to filter the party list to parties with at least one attending guest who has not made a choice for every course defined in `menu.json`. Each listed party with a phone SHALL offer Text and WhatsApp links pre-filled with a message carrying the party's food-choice link.
+
+#### Scenario: Food chase list
+- **WHEN** the admin selects the "food choice not made" filter
+- **THEN** only parties with an attending guest missing a course choice are listed, each with Text and WhatsApp links pre-filled with its food-choice link
+
 ### Requirement: Party and guest CRUD
 The admin SHALL be able to create, edit, and delete parties and guests: names, phones, child flags, and party token regeneration. Deletions SHALL require confirmation.
 

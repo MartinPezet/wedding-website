@@ -83,8 +83,8 @@ const mixedSeed = async (db: Db) => {
       isChild: true,
       attending: true,
       starterChoiceId: course('starter').options[1]!.id,
-      mainChoiceId: course('main').childOptions![0]!.id,
-      dessertChoiceId: course('dessert').childOptions![0]!.id,
+      mainChoiceId: course('main').options[1]!.id,
+      dessertChoiceId: course('dessert').options[1]!.id,
     },
   ], { responded: true, songRequest: 'Dancing Queen', noteToCouple: 'Congrats!' })
   await seedRooms(db, 'The Fulls', [
@@ -183,19 +183,19 @@ describeFeature(feature, (f) => {
         expect(attendees).toContain(course('starter').options[0]!.name)
         expect(attendees).toContain(course('main').options[0]!.name)
         expect(attendees).toContain(course('dessert').options[0]!.name)
-        expect(attendees).toContain(course('main').childOptions![0]!.name)
+        expect(attendees).toContain(course('main').options[1]!.name)
         expect(attendees).toContain('no nuts')
         // only attending guests appear
         expect(attendees).not.toContain('Nia Nope')
         expect(attendees).not.toContain('Gil Ghost')
-        // totals grouped by course, child options included
+        // totals grouped by course
         const totals = sheetText(workbook, 'Meal Totals')
         for (const entry of menu.courses) {
           expect(totals).toContain(entry.name)
         }
         expect(totals).toContain(course('main').options[0]!.name)
-        expect(totals).toContain(course('main').childOptions![0]!.name)
-        expect(totals).toContain(course('dessert').childOptions![0]!.name)
+        expect(totals).toContain(course('main').options[1]!.name)
+        expect(totals).toContain(course('dessert').options[1]!.name)
       })
     })
 

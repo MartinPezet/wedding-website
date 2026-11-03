@@ -20,6 +20,15 @@ Feature: Guest admin
       When the admin selects the not-yet-responded filter
       Then only parties without a submitted RSVP are listed, with phone numbers and copyable RSVP links
 
+  @req:food-choice-chase-filter
+  Rule: Food-choice chase filter
+    Parties with an attending guest still missing a course choice, with Text and WhatsApp links to chase them.
+
+    Scenario: Food chase list
+      Given parties whose attending guests have and have not chosen every course
+      When the admin selects the food-choice-not-made filter
+      Then only parties with an attending guest missing a course choice are listed, each with Text and WhatsApp links pre-filled with its food-choice link
+
   @req:party-and-guest-crud
   Rule: Party and guest CRUD
     Create, edit, delete parties and guests; regenerate tokens; confirm deletions.
