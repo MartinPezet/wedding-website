@@ -86,6 +86,17 @@ Alongside the Monzo link, the RSVP page SHALL show bank transfer details (payee 
 - **WHEN** a party has no rooms booked
 - **THEN** no bank details are shown
 
+### Requirement: Payment details available after the RSVP deadline
+Once the RSVP deadline has passed, the locked summary SHALL still show the party's total, the Monzo payment link (unless switched off) and the bank transfer details, computed from the party's stored room bookings, so guests can still pay.
+
+#### Scenario: Payment details shown after deadline
+- **WHEN** a party with rooms booked opens its RSVP link after the deadline
+- **THEN** the total, Monzo link and bank transfer details are shown with the party's reference
+
+#### Scenario: No rooms, no payment details after deadline
+- **WHEN** a party with no rooms booked opens its RSVP link after the deadline
+- **THEN** no total, Monzo link or bank details are shown
+
 ### Requirement: Room booking validated server-side
 The server SHALL reject a room-booking submission whose choice is not one of the three defined values, or whose "share with another party" entry is missing the shared-with name. A party's full set of room requests SHALL be replaced (not appended to) on every RSVP submission.
 
