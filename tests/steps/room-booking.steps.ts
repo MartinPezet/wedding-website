@@ -441,6 +441,41 @@ describeFeature(feature, (f) => {
     })
   })
 
+  f.Rule('Payment details available after the RSVP deadline', (r) => {
+    r.RuleScenario('Payment details shown after deadline', (s) => {
+      let wrapper: Wrapper
+      s.Given('a party with rooms booked opening its RSVP link after the deadline', () => {})
+      s.When('the page loads', async () => {
+        wrapper = await mountRsvp(rsvpData({
+          locked: true,
+          deadline: '2020-01-01T00:00:00Z',
+          rooms: [room('of', 'our_room', { occupants: 2 })],
+        }))
+      })
+      s.Then(`the total, Monzo link and bank transfer details are shown with the party's reference`, () => {
+        expect(wrapper.find('form').exists()).toBe(false)
+        expect(wrapper.find('[data-room-total]').text()).toContain('£160')
+        const href = new URL(wrapper.find('a[data-monzo-link]').attributes('href')!)
+        expect(href.pathname.endsWith('/160')).toBe(true)
+        expect(href.searchParams.get('d')).toBe(paymentReference(12))
+        expect(wrapper.find('[data-bank-detail="reference"]').text()).toContain(paymentReference(12))
+      })
+    })
+
+    r.RuleScenario('No rooms, no payment details after deadline', (s) => {
+      let wrapper: Wrapper
+      s.Given('a party with no rooms booked opening its RSVP link after the deadline', () => {})
+      s.When('the page loads', async () => {
+        wrapper = await mountRsvp(rsvpData({ locked: true, deadline: '2020-01-01T00:00:00Z', rooms: [] }))
+      })
+      s.Then('no total, Monzo link or bank details are shown', () => {
+        expect(wrapper.find('[data-room-total]').exists()).toBe(false)
+        expect(wrapper.find('a[data-monzo-link]').exists()).toBe(false)
+        expect(wrapper.find('[data-bank-detail]').exists()).toBe(false)
+      })
+    })
+  })
+
   f.Rule('Room booking validated server-side', (r) => {
     r.RuleScenario('Invalid choice rejected', (s) => {
       let db: TestDb
